@@ -80,6 +80,34 @@ button:focus-visible{outline:2px solid var(--glow);outline-offset:4px;border-rad
 .tag .arrow{display:none;width:0;height:0;border-left:7px solid var(--glow);border-top:5px solid transparent;border-bottom:5px solid transparent}
 .tag.edge .arrow{display:inline-block}
 .tag.edge{background:rgba(3,32,43,.72)}
+/* Ephemeral speech; one node per speaker, never a chat feed. */
+.speech{position:absolute;max-width:min(260px,60vw);padding:10px 14px;border:1px solid var(--line);border-radius:16px 16px 16px 4px;background:rgba(3,32,43,.88);color:var(--ink);font-size:15px;line-height:1.6;overflow-wrap:anywhere;white-space:pre-wrap;pointer-events:none}
+.speech[hidden],.chat-dock[hidden]{display:none}
+.chat-dock{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 24px + var(--chat-keyboard,0px));transform:translateX(-50%);width:min(380px,calc(100vw - 32px));z-index:4;pointer-events:none}
+.chat-form{display:flex;align-items:center;gap:8px;padding:7px;border:1px solid var(--line);border-radius:24px;background:rgba(3,32,43,.88);pointer-events:auto}
+.chat-form input{width:0;min-width:0;flex:1;border:0;border-radius:16px;padding:7px 10px;background:transparent;color:var(--ink);font:16px "Gowun Batang",serif}
+.chat-form input::placeholder{color:var(--ink-dim)}
+.chat-form input:focus-visible{outline:1px solid var(--glow)}
+.chat-form button{padding:9px 13px;border-radius:999px;background:var(--glow);color:var(--deep);font-size:13px;white-space:nowrap}
+.chat-form button:disabled{opacity:.4;cursor:default}
+.chat-meta{display:flex;justify-content:space-between;gap:10px;margin:6px 8px 0;padding:3px 7px;border-radius:10px;background:var(--chip);font-size:11px;line-height:1.5;color:var(--ink)}
+.chat-meta span:first-child{min-width:0}
+.chat-count{white-space:nowrap}
+.own-speech{position:relative;max-width:100%;width:fit-content;margin:0 auto 12px;border-radius:16px;text-align:center}
+.own-speech b{color:var(--glow);font-size:12px;margin-right:8px;font-weight:400}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+@media(max-width:900px),(pointer:coarse){
+ .chat-dock{bottom:calc(env(safe-area-inset-bottom,0px) + 12px + var(--chat-keyboard,0px))}
+ .bottom{padding-bottom:90px}
+ body.chat-speaking .bottom{padding-bottom:210px}
+ .own-speech{font-size:13px;line-height:1.5}
+ .depthctl{margin-bottom:70px}
+ body.chat-speaking .depthctl{margin-bottom:190px}
+ .breath{bottom:16%}
+}
+@media(min-width:901px) and (max-width:1150px){.chat-dock{width:300px}}
+body.chat-typing .depthctl,body.chat-typing .breath{visibility:hidden}
+body.chat-typing .bottom{visibility:hidden}
 
 /* hud */
 .hud{text-shadow:0 1px 14px rgba(3,32,43,.75),0 0 2px rgba(3,32,43,.5);position:fixed;inset:0;display:flex;flex-direction:column;pointer-events:none;opacity:0;transition:opacity 3s ease 1.2s;z-index:3;
@@ -148,6 +176,16 @@ button:focus-visible{outline:2px solid var(--glow);outline-offset:4px;border-rad
 <canvas id="sea" aria-label="바닷속 3D 공간. 끌어서 주위를 둘러볼 수 있어요."></canvas>
 <div class="tags" id="tags" aria-hidden="true"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<section class="chat-dock" id="chatDock" aria-label="다이버 말풍선 채팅" hidden>
+  <div class="speech own-speech" id="ownSpeech" role="status" hidden><b>나</b><span id="ownSpeechText"></span></div>
+  <form class="chat-form" id="chatForm" autocomplete="off">
+    <label class="sr-only" for="chatInput">함께 잠수 중인 다이버에게 메시지</label>
+    <input id="chatInput" type="text" placeholder="물밑에 한마디…" aria-describedby="chatStatus chatCount" enterkeyhint="send" spellcheck="false">
+    <button id="chatSend" type="submit" disabled>보내기</button>
+  </form>
+  <div class="chat-meta"><span id="chatStatus" role="status" aria-live="polite">연결된 뒤 메시지를 보낼 수 있어요</span><span class="chat-count" id="chatCount">0 / 100</span></div>
+  <span class="sr-only" id="chatAnnounce" role="status" aria-live="polite"></span>
+</section>
 
 <div class="hud" id="hud">
   <div class="top">
@@ -2244,6 +2282,7 @@ function makePeer(id, cc){
 function removePeer(id, e){
   scene.remove(e.diver);
   e.tag.remove();
+  clearSpeech(e);
   peers.delete(id);
 }
 function syncPeers(list){
@@ -2280,6 +2319,7 @@ function updateTogether(){
   $('gateLive').textContent = soloMode ? '지금 물속이 가득 차 있어요' : !ready ? pending : others > 0 ? `지금 바닷속에 ${others}명이 있어요` : '지금 바닷속이 조용해요 — 첫 다이버가 될 수 있어요';
   $('realtimeRetry').hidden = liveState !== 'error' && !soloMode;
   $('gateRealtimeRetry').hidden = $('realtimeRetry').hidden;
+  updateChatUI();
 }
 /* ---------- realtime (Supabase): presence = who is here, broadcast = where they are ---------- */
 const SUPABASE_URL = 'https://bdchynoyysravyoazehl.supabase.co';
@@ -2304,6 +2344,7 @@ function selfMetadata(){
 function clearRealtimeTimers(){ clearTimeout(retryTimer); clearTimeout(watchdog); retryTimer = watchdog = null; }
 function resetRealtime(){
   generation++; clearRealtimeTimers();
+  resetChat();
   if(trackFlight) clearTimeout(trackFlight.timer);
   subscribed = synced = tracked = false; trackFlight = null; trackDirty = false;
   peerInfo.clear(); peerPos.clear(); rebuildPeers();
@@ -2387,7 +2428,7 @@ function connectRealtime(reconnecting = false){
   try{
     if(!sbClient) sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {realtime:{params:{eventsPerSecond:5}}});
     // Explicit opt-in is needed for the initial untracked listener to receive Presence sync.
-    const ch = sbClient.channel('mulmit-sea', {config:{presence:{key:myId, enabled:true}, broadcast:{self:false}}});
+    const ch = sbClient.channel('mulmit-sea', {config:{presence:{key:myId, enabled:true}, broadcast:{self:false, ack:true}}});
     channel = ch;
     const current = () => gen === generation && ch === channel && !suspended;
     watchdog = setTimeout(()=>{ if(current()) failRealtime('subscribe', 'timeout'); }, 10000);
@@ -2438,6 +2479,9 @@ function connectRealtime(reconnecting = false){
       const e = peers.get(p.id);
       if(e) e.waveUntil = Date.now() + 2600;
     });
+    ch.on('broadcast', {event:'chat'}, msg => {
+      if(current() && chatReady()) receiveChat(msg && msg.payload);
+    });
     ch.subscribe(status => {
       if(!current()) return;
       if(status === 'SUBSCRIBED'){
@@ -2465,6 +2509,99 @@ document.addEventListener('visibilitychange', ()=>{
   }
 });
 window.addEventListener('online', ()=>{ retryCount = 0; connectRealtime(true); });
+// Start after chat initialization so synchronous SDK failures are safe, too.
+
+/* ---------- ephemeral chat ---------- */
+const CHAT_MAX = 100, CHAT_LIFETIME = 5000, CHAT_FADE = 800, CHAT_COOLDOWN = 700;
+let chatSequence = 0, chatLastSend = -Infinity, chatFlight = null, chatComposing = false, chatImeUntil = 0;
+const ownChat = {};
+function chatReady(){ return !!(channel && subscribed && synced && tracked && entered && !soloMode && !suspended); }
+function chatText(value){
+  if(typeof value !== 'string') return '';
+  // Slice before iteration to bound hostile input work; 100 astral codepoints need 200 UTF-16 units.
+  return Array.from(value.slice(0, CHAT_MAX*2).replace(/[\u0000-\u001f\u007f]/g,' ')).slice(0,CHAT_MAX).join('').trim();
+}
+function isTextEntry(target){
+  return !!(target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName) ||
+    (target.closest && target.closest('[contenteditable]:not([contenteditable="false"])'))));
+}
+function clearSpeech(owner){
+  if(owner.speech) owner.speech.remove();
+  owner.speech = null; owner.speechUntil = 0;
+}
+function showSpeech(owner, message, now = performance.now()){
+  if(owner === ownChat){
+    owner.speech = $('ownSpeech'); $('ownSpeechText').textContent = message;
+    document.body.classList.add('chat-speaking');
+  }else{
+    if(!owner.speech){ owner.speech = document.createElement('div'); owner.speech.className = 'speech'; tagsEl.appendChild(owner.speech); }
+    owner.speech.textContent = message;
+    $('chatAnnounce').textContent = `${owner.cc || '다이버'}: ${message}`;
+  }
+  owner.speechUntil = now + CHAT_LIFETIME;
+  owner.speech.hidden = false; owner.speech.style.opacity = '1';
+}
+function tickSpeech(owner, now){
+  if(!owner.speech) return false;
+  const left = owner.speechUntil - now;
+  if(left <= 0){
+    if(owner === ownChat){ owner.speech.hidden = true; $('ownSpeechText').textContent = ''; owner.speech = null; document.body.classList.remove('chat-speaking'); }
+    else clearSpeech(owner);
+    return false;
+  }
+  const k = Math.min(1,left/CHAT_FADE);
+  owner.speech.style.opacity = String(k*k*(3-2*k));
+  return true;
+}
+function receiveChat(p){
+  if(!chatReady() || !p || typeof p.id !== 'string' || p.id.length > 64 || p.id === myId || !peerInfo.has(p.id)) return;
+  const e = peers.get(p.id);
+  if(!e || !Number.isSafeInteger(p.sequence) || p.sequence <= 0 || p.sequence <= (e.chatSequence || 0)) return;
+  const text = chatText(p.message);
+  if(!text) return;
+  const now = performance.now();
+  if(now - (e.chatWindow ?? -Infinity) >= 2000){ e.chatWindow = now; e.chatHits = 0; }
+  if(e.chatHits >= 4) return; // Window resets; a burst never permanently silences a peer.
+  e.chatHits++; e.chatSequence = p.sequence;
+  showSpeech(e,text,now);
+}
+function updateChatUI(){
+  $('chatDock').hidden = !entered;
+  $('chatSend').disabled = !chatReady() || !!chatFlight || !chatText($('chatInput').value);
+  $('chatCount').textContent = `${Array.from($('chatInput').value || '').length} / ${CHAT_MAX}`;
+  if(!chatReady()) $('chatStatus').textContent = '연결된 뒤 메시지를 보낼 수 있어요';
+  else if(!chatFlight) $('chatStatus').textContent = '5초 뒤 사라져요 · 모두에게 보여요';
+}
+function resetChat(){
+  if(chatFlight){ clearTimeout(chatFlight.timer); if(chatFlight.cancel) chatFlight.cancel('cancelled'); }
+  chatFlight = null;
+  $('ownSpeech').hidden = true; $('ownSpeechText').textContent = ''; ownChat.speech = null;
+  document.body.classList.remove('chat-speaking');
+  $('chatAnnounce').textContent = '';
+}
+async function sendChat(){
+  if(chatComposing || performance.now() < chatImeUntil) return;
+  if(!chatReady()){ $('chatStatus').textContent = '연결된 뒤 메시지를 보낼 수 있어요'; return; }
+  const input = $('chatInput'), message = chatText(input.value), now = performance.now();
+  if(!message || chatFlight) return;
+  if(now - chatLastSend < CHAT_COOLDOWN){ $('chatStatus').textContent = '잠깐만요, 한 박자 쉬고 보내 주세요'; return; }
+  const ch = channel, gen = generation, flight = {};
+  chatLastSend = now; chatFlight = flight; updateChatUI(); $('chatStatus').textContent = '보내는 중이에요…';
+  let result;
+  try{
+    result = await Promise.race([
+      Promise.resolve(ch.send({type:'broadcast',event:'chat',payload:{id:myId,message,sequence:++chatSequence}})),
+      new Promise(resolve=>{ flight.cancel = resolve; flight.timer = setTimeout(()=>resolve('timed out'),3500); })
+    ]);
+  }catch(e){ result = 'error'; }
+  clearTimeout(flight.timer);
+  if(gen !== generation || ch !== channel || chatFlight !== flight) return;
+  chatFlight = null; updateChatUI();
+  if(result !== 'ok' || !chatReady()){ $('chatStatus').textContent = '전송을 확인하지 못했어요. 다시 보내 주세요'; return; }
+  showSpeech(ownChat,message);
+  if(chatText(input.value) === message) input.value = '';
+  updateChatUI();
+}
 connectRealtime();
 
 /* ---------- input ---------- */
@@ -2485,6 +2622,31 @@ function stopMobileMotion(){
   swimVel.set(0,0,0); targetDepth = depth; autoDescent = false;
 }
 function clearAllInput(){ keys.clear();stopMobileMotion(); }
+function updateChatViewport(){
+  const vv = window.visualViewport;
+  const lift = vv && isTextEntry(document.activeElement) ? Math.max(0,innerHeight-vv.height-vv.offsetTop) : 0;
+  document.documentElement.style.setProperty('--chat-keyboard',`${lift}px`);
+}
+$('chatInput').addEventListener('focus',()=>{ clearAllInput(); yawRate = 0; document.body.classList.add('chat-typing'); updateChatViewport(); });
+$('chatInput').addEventListener('blur',()=>{ document.body.classList.remove('chat-typing'); updateChatViewport(); });
+$('chatInput').addEventListener('compositionstart',()=>{ chatComposing = true; });
+$('chatInput').addEventListener('compositionend',()=>{ chatComposing = false; chatImeUntil = performance.now()+80; clampChatInput(); });
+function clampChatInput(){
+  if(!chatComposing) $('chatInput').value = Array.from($('chatInput').value).slice(0,CHAT_MAX).join('');
+  updateChatUI();
+}
+$('chatInput').addEventListener('input',clampChatInput);
+$('chatInput').addEventListener('keydown',e=>{
+  if(e.key === 'Escape' && !e.isComposing && !chatComposing){ e.preventDefault(); e.stopPropagation(); $('chatInput').blur(); }
+  if(e.key === 'Enter'){
+    e.preventDefault(); e.stopPropagation();
+    if(!e.isComposing && e.keyCode !== 229 && !chatComposing && performance.now() >= chatImeUntil) sendChat();
+  }
+});
+$('chatForm').addEventListener('submit',e=>{ e.preventDefault(); sendChat(); });
+document.addEventListener('focusin',e=>{ if(isTextEntry(e.target)) { clearAllInput(); yawRate = 0; } });
+if(window.visualViewport){ window.visualViewport.addEventListener('resize',updateChatViewport); window.visualViewport.addEventListener('scroll',updateChatViewport); }
+window.addEventListener('resize',updateChatViewport);
 function swimDirection(heading,tilt,forward,side){
   const n=Math.max(1,Math.hypot(forward,side));forward/=n;side/=n;
   return {x:Math.sin(heading)*Math.cos(tilt)*forward-Math.cos(heading)*side,y:Math.sin(tilt)*forward,z:Math.cos(heading)*Math.cos(tilt)*forward+Math.sin(heading)*side};
@@ -2551,7 +2713,9 @@ const KEYMAP = {
 };
 window.addEventListener('keydown', e => {
   if(!entered) return;
+  if(isTextEntry(e.target) || isTextEntry(document.activeElement) || e.isComposing || e.keyCode === 229){ clearAllInput(); return; }
   if($('inviteDialog').open) return;
+  if(e.key === 'Enter' && !e.repeat && !e.ctrlKey && !e.metaKey && (!e.target || e.target.tagName !== 'BUTTON')){ e.preventDefault(); $('chatInput').focus(); return; }
   if(e.code === 'KeyG' && !e.repeat && !e.ctrlKey && !e.metaKey){ e.preventDefault(); sendWave(); return; }
   const k = KEYMAP[e.code];
   if(!k) return;
@@ -2585,6 +2749,7 @@ $('shotBtn').addEventListener('click', takeShot);
 $('enterBtn').addEventListener('click', () => {
   if(entered) return;
   entered = true;
+  updateChatUI();
   enterTime = performance.now();
   breathEpoch = Date.now();
   initAudio();
@@ -2775,6 +2940,20 @@ function placeTag(e, W, H){
   e.tag.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) translate(-50%,${edge ? '-50%' : '-100%'})`;
   const dist = vB.length();
   e.dd.textContent = e.near ? '가까이 있어요' : edge ? `${Math.round(dist)}m 거리` : `수심 ${Math.round(e.d)}m`;
+  placeSpeech(e,W,H,inFront,edge,x,y);
+}
+function placeSpeech(e,W,H,inFront,edge,x,y){
+  if(!tickSpeech(e,performance.now())) return;
+  const bubble = e.speech;
+  bubble.hidden = false;
+  const bw = bubble.offsetWidth, bh = bubble.offsetHeight;
+  // Prefer right of head and above the name tag; flip left, never clamp to an edge.
+  let bx = x + 24 + bw <= W-12 ? x+24 : x-24-bw;
+  // Narrow screens may have no side wide enough: center above the same projected head.
+  if(bx<12 && x-bw/2>=12 && x+bw/2<=W-12) bx=x-bw/2;
+  const by = y-42-bh;
+  bubble.hidden = !entered || !inFront || edge || bx<12 || bx+bw>W-12 || by<12 || by+bh>H-12;
+  if(!bubble.hidden) bubble.style.transform = `translate(${bx.toFixed(1)}px,${by.toFixed(1)}px)`;
 }
 
 function frame(){
@@ -2782,7 +2961,10 @@ function frame(){
   const t = clock.elapsedTime;
   timeU.value = t;
 
-  const inputAllowed=entered && !$('inviteDialog').open;
+  const typing = isTextEntry(document.activeElement);
+  if(typing){ clearAllInput(); yawRate = 0; lastInteract = performance.now(); }
+  const inputAllowed=entered && !$('inviteDialog').open && !typing;
+  tickSpeech(ownChat,performance.now());
   const vDir = inputAllowed ? holdDir || ((keys.has('down') ? 1 : 0) - (keys.has('up') ? 1 : 0)) : 0;
   if(vDir) targetDepth = Math.max(MIN_DEPTH, Math.min(MAX_DEPTH, targetDepth + vDir*2.4*dt));
 
