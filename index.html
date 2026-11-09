@@ -61,7 +61,7 @@ button:focus-visible{outline:2px solid var(--glow);outline-offset:4px;border-rad
 .gate{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
   text-align:center;background:var(--veil);transition:opacity 2.4s ease, visibility 0s linear 2.4s;z-index:5;
   padding:calc(env(safe-area-inset-top,0px) + 24px) 24px calc(env(safe-area-inset-bottom,0px) + 24px)}
-.gate.gone{opacity:0;visibility:hidden}
+.gate.gone{opacity:0;visibility:hidden;pointer-events:none}
 .gate h1{margin:0;font-weight:400;font-size:clamp(72px,16vw,148px);letter-spacing:.14em;line-height:1;
   padding-left:.14em;text-shadow:0 0 40px rgba(166,244,228,.25)}
 .gate .line{margin:28px 0 30px;font-size:clamp(16px,2.2vw,19px);color:var(--ink);line-height:1.8}
@@ -2513,7 +2513,9 @@ window.addEventListener('online', ()=>{ retryCount = 0; connectRealtime(true); }
 
 /* ---------- ephemeral chat ---------- */
 const CHAT_MAX = 100, CHAT_LIFETIME = 5000, CHAT_FADE = 800, CHAT_COOLDOWN = 700;
-let chatSequence = 0, chatLastSend = -Infinity, chatFlight = null, chatComposing = false, chatImeUntil = 0;
+let chatSequence = 0, chatLastSend = -Infinity, chatFlight = null, chatComposing = false;
+let chatIntent = null, chatSettleTimer = null, chatSettling = false, chatCommitData = null;
+let chatAction = false, chatActionTimer = null, chatEnterRepeat = false;
 const ownChat = {};
 function chatReady(){ return !!(channel && subscribed && synced && tracked && entered && !soloMode && !suspended); }
 function chatText(value){
@@ -2573,6 +2575,9 @@ function updateChatUI(){
   else if(!chatFlight) $('chatStatus').textContent = '5초 뒤 사라져요 · 모두에게 보여요';
 }
 function resetChat(){
+  cancelChatIntent(); chatComposing = false; chatSettling = false; chatEnterRepeat = false;
+  clearTimeout(chatSettleTimer); chatSettleTimer = null;
+  clearTimeout(chatActionTimer); chatActionTimer = null; chatAction = false;
   if(chatFlight){ clearTimeout(chatFlight.timer); if(chatFlight.cancel) chatFlight.cancel('cancelled'); }
   chatFlight = null;
   $('ownSpeech').hidden = true; $('ownSpeechText').textContent = ''; ownChat.speech = null;
@@ -2580,7 +2585,7 @@ function resetChat(){
   $('chatAnnounce').textContent = '';
 }
 async function sendChat(){
-  if(chatComposing || performance.now() < chatImeUntil) return;
+  if(chatComposing) return;
   if(!chatReady()){ $('chatStatus').textContent = '연결된 뒤 메시지를 보낼 수 있어요'; return; }
   const input = $('chatInput'), message = chatText(input.value), now = performance.now();
   if(!message || chatFlight) return;
@@ -2602,6 +2607,37 @@ async function sendChat(){
   if(chatText(input.value) === message) input.value = '';
   updateChatUI();
 }
+function cancelChatIntent(){
+  if(chatIntent) clearTimeout(chatIntent.expiry);
+  chatIntent = null;
+}
+function markChatAction(){
+  chatAction = true;
+  clearTimeout(chatActionTimer);
+  // Coalesce keydown/click/implicit submit from this action, not future drafts.
+  chatActionTimer = setTimeout(()=>{ chatAction = false; chatActionTimer = null; },0);
+}
+function settleChatInput(){
+  clearTimeout(chatSettleTimer);
+  chatSettleTimer = setTimeout(()=>{
+    chatSettleTimer = null; chatSettling = false; chatCommitData = null;
+    const intent = chatIntent;
+    if(!intent || chatComposing) return;
+    const unchanged = intent.draft === $('chatInput').value;
+    cancelChatIntent();
+    if(unchanged && chatReady()) { markChatAction(); sendChat(); }
+  },0); // A task, not a microtask: let compositionend's final input finish first.
+}
+function requestChatSend(origin){
+  if(chatIntent || chatAction || (origin === 'form' && chatEnterRepeat)) return;
+  if(!chatReady() || chatFlight){ if(!chatReady()) updateChatUI(); return; }
+  if(!chatComposing && !chatSettling){ markChatAction(); sendChat(); return; }
+  const intent = {origin,draft:$('chatInput').value};
+  chatIntent = intent;
+  // No polling and no indefinite queued send if a browser never ends composition.
+  intent.expiry = setTimeout(()=>{ if(chatIntent === intent) cancelChatIntent(); },1200);
+  if(!chatComposing) settleChatInput();
+}
 connectRealtime();
 
 /* ---------- input ---------- */
@@ -2622,6 +2658,12 @@ function stopMobileMotion(){
   swimVel.set(0,0,0); targetDepth = depth; autoDescent = false;
 }
 function clearAllInput(){ keys.clear();stopMobileMotion(); }
+function leaveTextEntry(){
+  // preventDefault on the sea/hold buttons suppresses the browser's focus change.
+  // Blur BEFORE starting the gesture: the typing frame otherwise erases it.
+  const active = document.activeElement;
+  if(isTextEntry(active) && typeof active.blur === 'function') active.blur();
+}
 function updateChatViewport(){
   const vv = window.visualViewport;
   const lift = vv && isTextEntry(document.activeElement) ? Math.max(0,innerHeight-vv.height-vv.offsetTop) : 0;
@@ -2629,21 +2671,59 @@ function updateChatViewport(){
 }
 $('chatInput').addEventListener('focus',()=>{ clearAllInput(); yawRate = 0; document.body.classList.add('chat-typing'); updateChatViewport(); });
 $('chatInput').addEventListener('blur',()=>{ document.body.classList.remove('chat-typing'); updateChatViewport(); });
-$('chatInput').addEventListener('compositionstart',()=>{ chatComposing = true; });
-$('chatInput').addEventListener('compositionend',()=>{ chatComposing = false; chatImeUntil = performance.now()+80; clampChatInput(); });
+$('chatInput').addEventListener('compositionstart',()=>{
+  cancelChatIntent(); clearTimeout(chatSettleTimer); chatSettleTimer = null;
+  chatSettling = false; chatCommitData = null; chatComposing = true;
+});
+$('chatInput').addEventListener('compositionend',e=>{
+  chatComposing = false; chatSettling = true; chatCommitData = e.data;
+  // Empty composition data denotes cancellation, not a committed send.
+  if(e.data === '') { cancelChatIntent(); markChatAction(); }
+  clampChatInput();
+  if(chatIntent) chatIntent.draft = $('chatInput').value;
+  settleChatInput();
+});
 function clampChatInput(){
   if(!chatComposing) $('chatInput').value = Array.from($('chatInput').value).slice(0,CHAT_MAX).join('');
   updateChatUI();
 }
-$('chatInput').addEventListener('input',clampChatInput);
+function isChatCommitInput(e){
+  return e.isComposing || /Composition/.test(e.inputType || '') ||
+    (chatSettling && (e.inputType === undefined || (e.inputType === 'insertText' && e.data === chatCommitData)));
+}
+$('chatInput').addEventListener('beforeinput',e=>{
+  if(chatIntent && !isChatCommitInput(e)) cancelChatIntent();
+});
+$('chatInput').addEventListener('input',e=>{
+  const commit = isChatCommitInput(e);
+  if(chatIntent && !chatComposing && !commit) cancelChatIntent();
+  clampChatInput();
+  if(chatIntent && commit) chatIntent.draft = $('chatInput').value;
+  if(chatSettling) settleChatInput();
+});
 $('chatInput').addEventListener('keydown',e=>{
-  if(e.key === 'Escape' && !e.isComposing && !chatComposing){ e.preventDefault(); e.stopPropagation(); $('chatInput').blur(); }
+  if(e.key === 'Escape'){
+    cancelChatIntent(); markChatAction(); e.stopPropagation();
+    if(!e.isComposing && !chatComposing){ e.preventDefault(); $('chatInput').blur(); }
+  }
   if(e.key === 'Enter'){
-    e.preventDefault(); e.stopPropagation();
-    if(!e.isComposing && e.keyCode !== 229 && !chatComposing && performance.now() >= chatImeUntil) sendChat();
+    e.stopPropagation();
+    const composing = e.isComposing || e.keyCode === 229 || chatComposing;
+    if(!composing) e.preventDefault(); // Never block the IME's default commit.
+    if(e.repeat){ chatEnterRepeat = true; return; }
+    chatEnterRepeat = false;
+    // WebKit can report 229 on the Enter *after* compositionend as well.
+    if(composing && !chatSettling) chatComposing = true;
+    requestChatSend('enter');
   }
 });
-$('chatForm').addEventListener('submit',e=>{ e.preventDefault(); sendChat(); });
+$('chatInput').addEventListener('keyup',e=>{ if(e.key === 'Enter') chatEnterRepeat = false; });
+$('chatSend').addEventListener('click',e=>{
+  e.preventDefault(); requestChatSend('button');
+  // Some touch keyboards commit only on blur. Keep the intent; never fake an end.
+  if(chatComposing && document.activeElement === $('chatInput')) $('chatInput').blur();
+});
+$('chatForm').addEventListener('submit',e=>{ e.preventDefault(); requestChatSend('form'); });
 document.addEventListener('focusin',e=>{ if(isTextEntry(e.target)) { clearAllInput(); yawRate = 0; } });
 if(window.visualViewport){ window.visualViewport.addEventListener('resize',updateChatViewport); window.visualViewport.addEventListener('scroll',updateChatViewport); }
 window.addEventListener('resize',updateChatViewport);
@@ -2653,6 +2733,8 @@ function swimDirection(heading,tilt,forward,side){
 }
 canvas.addEventListener('pointerdown', e => {
   if(!entered || $('inviteDialog').open) return;
+  if(e.pointerType === 'mouse' && e.button !== 0) return;
+  leaveTextEntry();
   e.preventDefault();canvas.setPointerCapture(e.pointerId);lastInteract=performance.now();
   if(e.pointerType==='touch'){
     touchPoints.set(e.pointerId,{x:e.clientX,y:e.clientY});
@@ -2695,7 +2777,7 @@ canvas.addEventListener('wheel', e => {
 }, {passive:false});
 function bindHold(btn, dir){
   let owner=null;
-  const start = e => { if(!entered || $('inviteDialog').open)return;e.preventDefault();owner=e.pointerId;btn.setPointerCapture(e.pointerId);holdDir=dir;markInteraction(); };
+  const start = e => { if(!entered || $('inviteDialog').open)return;leaveTextEntry();e.preventDefault();owner=e.pointerId;btn.setPointerCapture(e.pointerId);holdDir=dir;markInteraction(); };
   const stop = e => { if(e && e.pointerId!==undefined && owner!==null && e.pointerId!==owner)return;owner=null;if(holdDir===dir){holdDir=0;targetDepth=depth;swimVel.y=0;} };
   btn.addEventListener('pointerdown', start);
   btn.addEventListener('pointerup', stop);
