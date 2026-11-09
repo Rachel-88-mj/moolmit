@@ -104,10 +104,16 @@ button:focus-visible{outline:2px solid var(--glow);outline-offset:4px;border-rad
 .depth{font-size:46px;line-height:1;font-variant-numeric:tabular-nums}
 .depth .unit{font-size:18px;margin-left:6px;color:var(--ink-dim)}
 .time,.me{margin-top:8px;font-size:13px;color:var(--ink-dim);font-variant-numeric:tabular-nums}
+.habitat{margin-top:12px;font-size:12px;line-height:1.8;color:var(--ink-dim);max-width:min(64vw,360px)}
+.habitat button{display:block;padding:3px 0;color:var(--ink-dim);font-size:12px;text-align:left}
 .me{display:flex;align-items:center;gap:6px;margin-top:6px}
 .me .flag{font-size:15px}
 .together{font-size:14px;color:var(--ink);text-align:right;display:flex;align-items:center;gap:10px}
 .together .dot{width:8px;height:8px;border-radius:50%;background:var(--glow);box-shadow:0 0 12px var(--glow)}
+.together{flex-wrap:wrap;justify-content:flex-end}
+.together .dot{flex-shrink:0}
+#realtimeRetry,#gateRealtimeRetry{border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px}
+#realtimeRetry[hidden],#gateRealtimeRetry[hidden]{display:none}
 .gate .live{margin:0 0 20px;font-size:14px;letter-spacing:.04em;color:var(--glow)}
 .gate .stats{margin-top:10px}
 .tag.near{border-color:var(--glow);background:rgba(166,244,228,.16)}
@@ -131,17 +137,11 @@ button:focus-visible{outline:2px solid var(--glow);outline-offset:4px;border-rad
 .invite-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.invite-actions button{padding:11px 16px;border:1px solid var(--line);border-radius:999px;font-size:14px}.invite-actions button:first-child{background:#a6f4e4;color:#03202b}.invite button:disabled{opacity:.45;cursor:wait}
 .invite .invite-status{min-height:24px;color:var(--glow);margin-bottom:0}
 @media(max-width:520px){.invite{padding:18px}.toggles{gap:6px 12px;max-width:78%}.toast{white-space:normal;max-width:90vw;text-align:center}}
-.swimpad{display:none;position:fixed;left:max(16px,env(safe-area-inset-left));bottom:calc(env(safe-area-inset-bottom,0px) + 142px);width:174px;pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none}
-.swimpad .pad-label{text-align:center;font-size:11px;color:var(--ink-dim);margin-bottom:8px;letter-spacing:.08em}
-.pad-grid{display:grid;grid-template-columns:repeat(3,54px);grid-template-rows:repeat(3,48px);gap:5px}
-.pad-grid button{border:1px solid var(--line);background:rgba(3,32,43,.72);border-radius:15px;font-size:13px;touch-action:none;min-width:44px;min-height:44px}
-.pad-grid button.active,.pad-grid button:active{background:rgba(166,244,228,.3);border-color:var(--glow)}
-.pad-grid .pad-fwd{grid-column:2;grid-row:1}.pad-grid .pad-left{grid-column:1;grid-row:2}.pad-grid .pad-stop{grid-column:2;grid-row:2;font-size:11px}.pad-grid .pad-right{grid-column:3;grid-row:2}.pad-grid .pad-back{grid-column:2;grid-row:3}
 @media(pointer:coarse),(max-width:900px){
- .hud.on .swimpad{display:block}.depthctl{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:calc(env(safe-area-inset-bottom,0px) + 142px);gap:12px}.depthctl button{min-height:48px;min-width:84px;background:rgba(3,32,43,.68)}
+ .depthctl{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:calc(env(safe-area-inset-bottom,0px) + 142px);gap:12px}.depthctl button{min-height:48px;min-width:84px;background:rgba(3,32,43,.68)}
  .breath{bottom:2%;font-size:13px}.hint{top:8%;width:88%;font-size:12px;line-height:1.9}.hud{padding-left:16px;padding-right:16px}
 }
-@media(max-height:520px) and (orientation:landscape){.swimpad{bottom:calc(env(safe-area-inset-bottom,0px) + 80px);transform:scale(.82);transform-origin:bottom left}.depthctl{bottom:calc(env(safe-area-inset-bottom,0px) + 80px)}.depth{font-size:28px}.time,.me{font-size:11px}.hint{top:0%;max-width:46%}}
+@media(max-height:520px) and (orientation:landscape){.depthctl{bottom:calc(env(safe-area-inset-bottom,0px) + 80px)}.depth{font-size:28px}.time,.me{font-size:11px}.hint{top:0%;max-width:46%}}
 </style>
 </head>
 <body>
@@ -172,18 +172,9 @@ button:focus-visible{outline:2px solid var(--glow);outline-offset:4px;border-rad
       <div class="depth"><span id="dval">0.0</span><span class="unit">m</span></div>
       <div class="time">다이브 타임 <span id="tval">00:00</span></div>
       <div class="me">내 수트 표시 <span class="flag" id="meFlag"></span><span id="meCC"></span></div>
+      <div class="habitat"><span id="habitatName">화산섬의 물밑</span><button id="routeBtn" type="button" aria-pressed="false">물길 힌트 켜기</button><span id="routeHint" hidden></span></div>
     </div>
-    <div class="together"><span class="dot" aria-hidden="true"></span><span id="together">지금은 혼자 잠겨 있어요</span></div>
-  </div>
-  <div class="swimpad" id="swimPad" role="group" aria-label="바라보는 방향 기준 이동 패드">
-    <div class="pad-label">바라보는 방향 기준</div>
-    <div class="pad-grid">
-      <button class="pad-fwd" type="button" data-swim="fwd" aria-label="앞으로 헤엄치기">앞으로</button>
-      <button class="pad-left" type="button" data-swim="left" aria-label="왼쪽으로 이동">왼쪽</button>
-      <button class="pad-stop" id="swimStop" type="button" aria-label="이동 멈추기">멈춤</button>
-      <button class="pad-right" type="button" data-swim="right" aria-label="오른쪽으로 이동">오른쪽</button>
-      <button class="pad-back" type="button" data-swim="back" aria-label="뒤로 헤엄치기">뒤로</button>
-    </div>
+    <div class="together"><span class="dot" aria-hidden="true"></span><span id="together" role="status">바닷속 연결을 확인하고 있어요</span><button id="realtimeRetry" type="button" hidden aria-label="바닷속 실시간 연결 다시 시도">다시 연결</button></div>
   </div>
 </div>
 
@@ -191,6 +182,7 @@ button:focus-visible{outline:2px solid var(--glow);outline-offset:4px;border-rad
   <h1>물밑</h1>
   <p class="line">숨소리만 남는 곳,<br>함께 잠기는 바다.</p>
   <p class="live" id="gateLive">바닷속 다이버를 확인하는 중이에요</p>
+  <button id="gateRealtimeRetry" type="button" hidden aria-label="입장 화면에서 바닷속 실시간 연결 다시 시도">다시 연결</button>
   <button class="enter" id="enterBtn" type="button">입수하기</button>
   <p class="note">소리를 켜고 들어오면 더 좋아요</p>
   <p class="note stats" id="gateStats"></p>
@@ -308,7 +300,7 @@ const envCube = (function(){
 const envMats = [];
 function envMat(mat, base){ mat.envMap = envCube; mat.userData.envBase = base; mat.envMapIntensity = base; envMats.push(mat); return mat; }
 
-const C_SHALLOW = new THREE.Color('#2b8fa3'), C_MID = new THREE.Color('#0c4c62'), C_DEEP = new THREE.Color('#03202b');
+const C_SHALLOW = new THREE.Color('#377f80'), C_MID = new THREE.Color('#15575e'), C_DEEP = new THREE.Color('#062c3b');
 function waterColor(d, out){
   if(d < 15) out.copy(C_SHALLOW).lerp(C_MID, d/15);
   else out.copy(C_MID).lerp(C_DEEP, Math.min(1, (d-15)/25));
@@ -419,10 +411,10 @@ const glowTex = makeGlow();
   const pos = geo.attributes.position;
   for(let i=0;i<pos.count;i++){
     const x = pos.getX(i), z = pos.getZ(i);
-    pos.setY(i, Math.sin(x*0.08)*1.5 + Math.cos(z*0.06)*1.8 + Math.sin((x+z)*0.21)*0.45 + Math.sin(x*0.5+z*0.3)*0.12);
+    pos.setY(i, floorH(x,z)-FLOOR_Y);
   }
   geo.computeVertexNormals();
-  const mat = new THREE.MeshLambertMaterial({color:0xc9bb92});
+  const mat = new THREE.MeshLambertMaterial({color:0x6a7770});
   mat.onBeforeCompile = sh => {
     sh.uniforms.uTime = timeU;
     sh.vertexShader = 'varying vec3 vWPos;\n' + sh.vertexShader.replace('#include <begin_vertex>',
@@ -543,6 +535,7 @@ function anemoneCoral(seed){
   return mergeGeos(parts);
 }
 (function reef(){
+  return; // Galapagos uses the anchored volcanic habitat builder below, not a coral garden.
   const coralMat = envMat(new THREE.MeshStandardMaterial({color:0xffffff, roughness:0.82, metalness:0, side:THREE.DoubleSide}), 0.25);
   const anemMat = coralMat.clone();
   envMats.push(anemMat);
@@ -832,8 +825,7 @@ function makeSchool(n, depthOff, seed){
   schools.push(sc);
   return sc;
 }
-makeSchool(320, -3, 0.7);
-makeSchool(220, 5, 3.9);
+// Legacy camera-depth schools are deliberately not spawned in this region.
 function schoolCenter(sc, t, out){
   const k = sc.seed;
   return out.set(
@@ -873,6 +865,7 @@ function updateSchools(t, dt, camDepth){
 
 /* ========== MANTA RAY ========== */
 const manta = (function(){
+  return new THREE.Group(); // Inactive in the Galapagos region.
   const geo = new THREE.PlaneGeometry(1, 1, 80, 40);
   const mat = new THREE.ShaderMaterial({
     uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime:{value:0} }]),
@@ -1049,7 +1042,7 @@ sharkMat.customProgramCacheKey = () => 'mulmit-whale-shark-v1';
 const shark = new THREE.Mesh(sharkGeo, sharkMat);
 shark.frustumCulled = false;
 shark.scale.setScalar(9.5);
-scene.add(shark);
+shark.visible = false; // Legacy whale shark is not part of this source-inspired region.
 let sharkDepth = 6;
 function sharkPath(t, out){
   const a = t*0.043 + 2.1;
@@ -1177,6 +1170,7 @@ function jellyMaterials(bellCol, armCol, len, armLen, seed){
   return {bell, tent, arms};
 }
 (function spawnJellies(){
+  return; // No jellyfish encounters in this region.
   for(let k=0;k<15;k++){
     const moon = k % 3 !== 2;
     const seed = Math.random()*10;
@@ -1450,13 +1444,26 @@ function buildDiver(accentHex, tankHex, cc){
 }
 
 /* ========== GIANT SEA TURTLE (resting on the floor) ========== */
-function floorH(x, z){ return FLOOR_Y + Math.sin(x*0.08)*1.5 + Math.cos(z*0.06)*1.8 + Math.sin((x+z)*0.21)*0.45 + Math.sin(x*0.5+z*0.3)*0.12; }
+function volcanicShelf(x,z,cx,cz,rx,rz,h){return h*Math.exp(-((x-cx)*(x-cx)/(rx*rx)+(z-cz)*(z-cz)/(rz*rz)));}
+function floorH(x, z){
+  // Broad overlapping volcanic shelves. Fixed world coordinates; never camera-relative.
+  const natural=-41+volcanicShelf(x,z,0,2,24,24,25)+volcanicShelf(x,z,29,-9,17,20,20)+volcanicShelf(x,z,46,19,19,20,27)
+    +volcanicShelf(x,z,-31,-10,21,19,15)+volcanicShelf(x,z,-53,18,18,21,14)+volcanicShelf(x,z,29,-43,18,15,8)
+    +Math.sin(x*.19)*.45+Math.cos(z*.17)*.38;
+  // A broad, planar volcanic resting ledge. Its interior spans the sharks' entire
+  // footprint AND the 3m floor-grid triangles, so belly contact is not a tangent
+  // approximation over a curved seabed. Smoothly rejoin the surrounding slope.
+  const radius=Math.hypot(x-29,z+43),blend=Math.max(0,Math.min(1,(radius-8)/5));
+  const smooth=blend*blend*(3-2*blend),ledge=-32.4+.035*(x-29)+.025*(z+43);
+  return ledge+(natural-ledge)*smooth;
+}
 function gridH(x, z){
   const st = 3, ox = (x + 210)/st, oz = (z + 210)/st;
   const i = Math.floor(ox), k = Math.floor(oz), fx = ox - i, fz = oz - k;
   const X0 = -210 + i*st, Z0 = -210 + k*st;
   const a = floorH(X0, Z0), b = floorH(X0+st, Z0), c = floorH(X0, Z0+st), d = floorH(X0+st, Z0+st);
-  return (a*(1-fx) + b*fx)*(1-fz) + (c*(1-fx) + d*fx)*fz;
+  // Match PlaneGeometry's b-c diagonal exactly, rather than bilinear hovering.
+  return fx+fz<=1 ? a+(b-a)*fx+(c-a)*fz : d+(c-d)*(1-fx)+(b-d)*(1-fz);
 }
 const VOR_GLSL = `
 vec3 vor(vec2 p, float jit, out vec2 toC){
@@ -1501,6 +1508,7 @@ function turtleMat(kind){
   return m;
 }
 const turtle = (function(){
+  return {g:new THREE.Group()}; // Replaced by the animated habitat turtle group.
   const S = 1.6;
   const g = new THREE.Group();
   const shellM = turtleMat('shell'), skinM = turtleMat('skin'), bellyM = turtleMat('belly');
@@ -1728,86 +1736,276 @@ function marineBatch(kind,count){
   mesh.name='marine-'+kind; mesh.frustumCulled=false;
   mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(mesh); return mesh;
 }
-const marineLife={
-  reefSharks:marineBatch('reefShark',2), dolphins:marineBatch('dolphin',2),
-  barracudas:marineBatch('barracuda',32), clownfish:marineBatch('clownfish',24),
-  sharkDepth:11, dolphinDepth:8.8, barracudaDepth:13,
-  sharkCenter:new THREE.Vector3(), dolphinCenter:new THREE.Vector3(),
-  barracudaCenter:new THREE.Vector3(), clownCenters:[]
-};
-// Six resident clusters anchored to the actual anemones (not a guessed flat floor).
-const clownHomes=reefHomes.slice(0,6);
-for(const home of clownHomes) marineLife.clownCenters.push(new THREE.Vector3(home.x,gridH(home.x,home.z)+.85*home.scale,home.z));
-const marineDummy=new THREE.Object3D(), marineP=new THREE.Vector3(), marineQ=new THREE.Vector3();
-function reefSharkPath(t,i,out){
-  const a=t*.075+i*2.65;
-  return out.set(Math.sin(a)*12,-marineLife.sharkDepth+Math.sin(t*.16+i)*.55,Math.cos(a)*9+3);
-}
-function dolphinPath(t,i,out){
-  const a=t*.10;
-  // Periodic, smooth surfacing arcs; no attraction towards the diver's position.
-  const surface=Math.pow(Math.max(0,Math.sin(t*.10-.9)),6);
-  // Parallel trajectories with a stable ~4.83 m centre separation, including
-  // the opening pass; phase offsets formerly let the pair converge/overlap.
-  return out.set(Math.sin(a)*15-4+i*4.4,-marineLife.dolphinDepth*(1-surface)-.75*surface+i*.85,Math.cos(a)*11+6+i*1.8);
-}
-function barracudaPath(t,out){
-  return out.set(Math.sin(t*.065+.4)*13,-marineLife.barracudaDepth+Math.sin(t*.17)*.6,Math.cos(t*.065+.4)*10+3);
-}
-function placeMarine(mesh,i,p,q,scale,bank){
-  marineDummy.position.copy(p); marineDummy.lookAt(q); marineDummy.rotateZ(bank||0);
-  marineDummy.scale.setScalar(scale); marineDummy.updateMatrix(); mesh.setMatrixAt(i,marineDummy.matrix);
-}
-function updateMarineLife(t,dt,camDepth){
-  marineLife.sharkDepth=easeTo(marineLife.sharkDepth,Math.max(9,Math.min(32,camDepth+1)),.10,dt);
-  marineLife.dolphinDepth=easeTo(marineLife.dolphinDepth,Math.max(8,Math.min(22,camDepth-1)),.07,dt);
-  marineLife.barracudaDepth=easeTo(marineLife.barracudaDepth,Math.max(12,Math.min(37.5,camDepth+2)),.30,dt);
-  for(let i=0;i<2;i++){
-    reefSharkPath(t,i,marineP); reefSharkPath(t+.12,i,marineQ);
-    if(i===0) marineLife.sharkCenter.copy(marineP);
-    placeMarine(marineLife.reefSharks,i,marineP,marineQ,i?1.9:2,Math.sin(t*.075)*.045);
-    dolphinPath(t,i,marineP); dolphinPath(t+.12,i,marineQ);
-    if(i===0) marineLife.dolphinCenter.copy(marineP);
-    placeMarine(marineLife.dolphins,i,marineP,marineQ,i?2:2.08,Math.sin(t*.10)*.08);
+/* ========== GALAPAGOS: fixed habitats, not an aquarium following the camera ========== */
+// Chapter labels describe the video; these are deliberately not taxonomic species IDs.
+const GALAPAGOS_ZONES=Object.freeze([
+  {id:'edge',name:'갈라진 현무암 가장자리',x:0,z:0,r:14,min:8,max:18,next:['silver','turtles','channel']},
+  {id:'silver',name:'은빛 물고기의 물길',x:-31,z:-10,r:14,min:18,max:28,next:['edge','reef','channel']},
+  {id:'turtles',name:'거북이 머무는 돌턱',x:29,z:-9,r:12,min:10,max:22,next:['edge','lions','rest']},
+  {id:'lions',name:'바다사자의 푸른 만',x:46,z:19,r:13,min:4,max:16,next:['turtles']},
+  {id:'reef',name:'상어가 도는 검은 능선',x:-53,z:18,r:12,min:22,max:32,next:['silver','blue']},
+  {id:'blue',name:'귀상어의 푸른 벽',x:-48,z:49,r:13,min:18,max:32,next:['reef']},
+  {id:'rest',name:'잠든 상어의 돌바닥',x:29,z:-43,r:12,min:28,max:39,next:['turtles','channel']},
+  {id:'channel',name:'바라쿠다의 해협',x:-5,z:-48,r:13,min:22,max:34,next:['edge','silver','rest']}
+]);
+const GALAPAGOS_SPECS=Object.freeze([
+  {kind:'crevice',label:'바위틈 작은 물고기',zone:'edge',n:26,size:.20,y:-13,rx:5,rz:4,speed:.09},
+  {kind:'trevally',label:'전갱이 큰 무리',zone:'silver',n:240,size:.82,y:-21,rx:5,rz:4,speed:.065},
+  {kind:'turtle',label:'바다거북 무리',zone:'turtles',n:5,size:1.25,y:-14,rx:5,rz:4,speed:.055},
+  {kind:'saddle',label:'안장돔 무리',zone:'turtles',n:76,size:.50,y:-18,rx:4,rz:4,speed:.07},
+  {kind:'seaLion',label:'바다사자',zone:'lions',n:4,size:1.65,y:-9,rx:7,rz:6,speed:.19},
+  {kind:'reefShark',label:'리프상어 무리',zone:'reef',n:12,size:2.05,y:-26,rx:8,rz:6,speed:.075},
+  {kind:'hammerhead',label:'귀상어 무리',zone:'blue',n:22,size:2.30,y:-24,rx:7,rz:6,speed:.065},
+  {kind:'resting',label:'바닥에서 쉬는 상어',zone:'rest',n:9,size:1.9,y:-36,rx:0,rz:0,speed:0},
+  {kind:'surgeon',label:'서전피시 무리',zone:'rest',n:88,size:.44,y:-29,rx:5,rz:3,speed:.09},
+  {kind:'barracuda',label:'바라쿠다 무리',zone:'channel',n:58,size:1.10,y:-26,rx:6,rz:4,speed:.06},
+  {kind:'orca',label:'멀리 수면을 지나는 범고래',zone:'lions',n:2,size:5.2,y:-2.5,rx:0,rz:0,speed:.035}
+]);
+const galZoneLookup=Object.create(null);
+for(const z of GALAPAGOS_ZONES)galZoneLookup[z.id]=z;
+function galZone(id){return galZoneLookup[id];}
+function galSample(s,t,i,out){
+  const z=galZone(s.zone), phase=i*2.399963, a=t*s.speed;
+  if(s.kind==='orca'){
+    // A broad offshore circuit: a short coastal pass once per ~180 seconds.
+    // Never teleported, hidden on a timer, attracted to or aimed at a swimmer.
+    return out.set(89-35*Math.cos(a)+i*7,-4.6-i*.8,35+88*Math.sin(a)+i*4);
   }
-  barracudaPath(t,marineLife.barracudaCenter);
-  for(let i=0;i<32;i++){
-    const lag=(i%8)*.45, row=Math.floor(i/8)-1.5;
-    barracudaPath(t-lag,marineP); barracudaPath(t-lag+.12,marineQ);
-    const x=row*.65,y=Math.sin(i*2.4)*.65,z=(i%3)*.30;
-    marineP.x+=x; marineP.y+=y; marineP.z+=z;
-    marineQ.x+=x; marineQ.y+=y; marineQ.z+=z;
-    // Keep the entire school above the locally sampled terrain when it dives.
-    const floor=Math.max(gridH(marineP.x,marineP.z),gridH(marineQ.x,marineQ.z))+1.15;
-    marineP.y=Math.max(marineP.y,floor); marineQ.y=Math.max(marineQ.y,floor);
-    placeMarine(marineLife.barracudas,i,marineP,marineQ,.75+(i%5)*.025,0);
+  if(s.kind==='resting'){
+    const x=z.x+((i%3)-1)*3.6+Math.sin(i*2.4)*.45, zz=z.z+(Math.floor(i/3)-1)*3.3+Math.cos(i*2.4)*.4;
+    // Flat belly meets the planar ledge with a 4mm clearance; never bury bodies.
+    const tilt=Math.sqrt(1+.035*.035+.025*.025);
+    return out.set(x,gridH(x,zz)+(s.size*.09+.004)*tilt,zz);
   }
-  for(let i=0;i<24;i++){
-    const c=marineLife.clownCenters[Math.floor(i/4)], a=t*.65+i*2.4, radius=.20+(i%4)*.105;
-    marineP.set(c.x+Math.sin(a)*radius,c.y+Math.sin(a*.7+i)*.16,c.z+Math.cos(a)*radius);
-    marineP.y=Math.max(marineP.y,gridH(marineP.x,marineP.z)+.45);
-    marineQ.set(marineP.x+Math.cos(a)*.1,marineP.y+Math.cos(a*.7+i)*.012,marineP.z-Math.sin(a)*.1);
-    placeMarine(marineLife.clownfish,i,marineP,marineQ,.12+(i%4)*.018,Math.sin(a)*.055);
-  }
-  marineLife.reefSharks.instanceMatrix.needsUpdate=true; marineLife.dolphins.instanceMatrix.needsUpdate=true;
-  marineLife.barracudas.instanceMatrix.needsUpdate=true; marineLife.clownfish.instanceMatrix.needsUpdate=true;
+  const large=s.kind==='reefShark'||s.kind==='hammerhead'||s.kind==='seaLion'||s.kind==='turtle';
+  const angle=large ? a+i*6.283185/s.n : a;
+  const spread=large ? 0 : Math.sqrt((i+.5)/s.n)*5.5;
+  const x=z.x+Math.sin(angle)*s.rx+Math.cos(phase)*spread;
+  const zz=z.z+Math.cos(angle)*s.rz+Math.sin(phase)*spread;
+  let y=s.y+Math.sin(t*.22+phase)*(large?1.1:.55)+(large?((i%3)-1)*1.25:((i%7)-3)*.42);
+  if(s.kind==='crevice') y=gridH(x,zz)+.65+((i%4)*.25);
+  return out.set(x,Math.max(y,gridH(x,zz)+(s.kind==='crevice'? .65:2.2)),zz);
 }
+// Build one merged, shaded geometry per silhouette. Part IDs also drive flippers.
+function galGeometry(kind){
+  if(kind==='resting'){
+    const g=marineGeometry('reefShark'),p=g.attributes.position;
+    for(let i=0;i<p.count;i++)if(p.getY(i)<-.09)p.setY(i,-.09);
+    g.computeVertexNormals();return g;
+  }
+  if(kind==='reefShark'||kind==='barracuda') return marineGeometry(kind);
+  if(kind==='hammerhead'){
+    const base=marineGeometry('reefShark');
+    // A real lateral cephalofoil, nearly four times the trunk width.
+    const head=new THREE.SphereGeometry(1,24,10).scale(.48,.065,.11).translate(0,.005,.40);
+    const parts=[{geo:base,part:0},{geo:head,part:0}];
+    for(const sd of [-1,1]) parts.push({geo:new THREE.SphereGeometry(.018,8,6).translate(sd*.468,.018,.43),part:2});
+    return mergeGeos(parts);
+  }
+  const parts=[];
+  const ell=(x,y,z,sx,sy,sz,part=0)=>parts.push({geo:new THREE.SphereGeometry(1,20,12).scale(sx,sy,sz).translate(x,y,z),part});
+  const fin=(pts,part=1,h=true)=>parts.push({geo:marineFin(pts,.008,h,20),part});
+  if(kind==='turtle'){
+    ell(0,.10,0,.43,.22,.57,4);ell(0,-.025,0,.41,.075,.54,5);
+    ell(0,.025,.64,.11,.09,.20);ell(0,.03,.48,.10,.08,.17);
+    for(const sd of [-1,1]){
+      fin([[sd*.29,0,.32],[sd*.85,-.045,.07],[sd*.72,-.03,-.11],[sd*.34,0,.13]],sd<0?6:7);
+      fin([[sd*.26,-.015,-.35],[sd*.51,-.03,-.52],[sd*.28,-.025,-.51]],sd<0?6:7);
+      ell(sd*.085,.065,.73,.018,.018,.022,2);
+    }
+  }else if(kind==='seaLion'||kind==='orca'){
+    const orca=kind==='orca';
+    const profile=marineProfile(orca ? [[0,0],[.08,.12],[.25,.20],[.45,.21],[.65,.16],[.83,.08],[1,.015]] : [[0,0],[.12,.08],[.27,.13],[.43,.17],[.62,.14],[.83,.07],[1,.018]]);
+    parts.push({geo:tubeGeo(42,24,.60,-.65,(s,th)=>[Math.cos(th)*profile(s),Math.sin(th)*profile(s)*.95]),part:0});
+    if(orca){
+      fin([[0,.16,.10],[0,.72,-.13],[0,.49,-.19],[0,.13,-.30]],1,false);
+      fin([[0,0,-.60],[.40,0,-.78],[.28,0,-.83],[0,0,-.72],[-.28,0,-.83],[-.40,0,-.78]]);
+    }else{
+      // Visible raised neck, round head, blunt muzzle and dark nose.
+      ell(0,.08,.42,.13,.15,.22);ell(0,.14,.60,.13,.125,.14);
+      ell(0,.095,.72,.10,.062,.095,5);ell(0,.12,.794,.046,.028,.024,2);
+      for(const sd of [-1,1]){
+        for(let k=0;k<5;k++){
+          const g=new THREE.CylinderGeometry(.0018,.0018,.24,3);
+          g.rotateZ(Math.PI/2);g.rotateY(sd*(k-2)*.12);g.translate(sd*.15,.09+k*.009,.73-(k-2)*.015);
+          parts.push({geo:g,part:5});
+        }
+        fin([[0,0,-.60],[sd*.17,-.015,-.84],[sd*.21,0,-.72],[sd*.055,0,-.56]],sd<0?6:7);
+      }
+    }
+    for(const sd of [-1,1]){
+      fin([[sd*.12,-.02,.21],[sd*(orca?.43:.42),-.16,-.10],[sd*.34,-.15,-.24],[sd*.12,-.06,.01]],sd<0?6:7);
+      ell(sd*(orca?.115:.102),orca?.05:.19,orca?.48:.65,.013,.015,.018,2);
+    }
+  }else{
+    const disk=kind==='surgeon', silver=kind==='trevally';
+    const h=disk?.33:silver?.23:.25, w=disk?.075:.09;
+    ell(0,0,0,w,h,.39);
+    fin([[0,.02,-.32],[0,.25,-.64],[0,.10,-.56],[0,0,-.45],[0,-.10,-.56],[0,-.25,-.64],[0,-.02,-.32]],1,false);
+    fin([[0,h*.6,.23],[0,h*1.30,.06],[0,h*1.1,-.24],[0,h*.6,-.31]],1,false);
+    fin([[0,-h*.5,.13],[0,-h*1.18,-.12],[0,-h*.6,-.31]],1,false);
+    for(const sd of [-1,1]){
+      fin([[sd*.07,-.015,.20],[sd*.24,-.07,-.01],[sd*.07,-.08,.01]]);
+      ell(sd*w*.86,h*.26,.28,.018,.025,.025,3);ell(sd*(w+.005),h*.26,.29,.012,.016,.016,2);
+    }
+  }
+  const g=mergeGeos(parts);parts.forEach(p=>p.geo.dispose());return g;
+}
+function galMaterial(kind){
+  const sharkLike=kind==='reefShark'||kind==='resting'||kind==='hammerhead';
+  const m=envMat(new THREE.MeshStandardMaterial({color:0xffffff,roughness:.57,metalness:kind==='trevally'?.38:.08,side:THREE.DoubleSide}),.65);
+  m.onBeforeCompile=sh=>{
+    sh.uniforms.uTime=timeU;
+    sh.vertexShader=`uniform float uTime; attribute float aPart; attribute float aPhase;
+      varying vec3 vAnimal; varying float vAnimalPart; varying float vDistance;
+      `+sh.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
+      vAnimal=position; vAnimalPart=aPart;
+      float beat=uTime*${kind==='resting'?'0.65':kind==='seaLion'?'3.4':kind==='turtle'?'1.8':'4.8'}+aPhase;
+      ${kind==='turtle'||kind==='seaLion' ? `if(aPart>5.5) transformed.y+=sin(beat+step(6.5,aPart)*.5)*abs(position.x)*.28;` : `float rear=max(0.0,-position.z-.04);transformed.${kind==='orca'?'y':'x'}+=sin(beat-position.z*4.0)*rear*rear*${kind==='resting'?'.014':'.16'};`}
+      `).replace('#include <worldpos_vertex>',`#include <worldpos_vertex>
+      vec4 galWorld=vec4(transformed,1.0);
+      #ifdef USE_INSTANCING
+      galWorld=instanceMatrix*galWorld;
+      #endif
+      vDistance=length((modelMatrix*galWorld).xyz-cameraPosition);`);
+    let color;
+    if(kind==='orca') color=`vec3 col=vec3(.022,.032,.037);
+      float belly=1.0-smoothstep(-.12,-.055,vAnimal.y);col=mix(col,vec3(.92,.94,.88),belly);
+      float eyePatchDistance=length(vec2((vAnimal.z-.36)/.115,(vAnimal.y-.075)/.049));
+      col=mix(col,vec3(.95,.96,.90),(1.0-smoothstep(.8,1.0,eyePatchDistance))*step(.08,abs(vAnimal.x)));
+      float saddleZ=(vAnimal.z+.26)/.15;
+      float saddle=exp(-saddleZ*saddleZ)*smoothstep(.05,.15,vAnimal.y);col=mix(col,vec3(.48,.54,.53),saddle*.9);`;
+    else if(kind==='turtle') color=`vec3 col=vec3(.32,.36,.19);
+      if(vAnimalPart>3.5 && vAnimalPart<4.5){vec2 uv=vAnimal.xz*9.0;float seam=min(abs(fract(uv.x+floor(uv.y)*.5)-.5),abs(fract(uv.y)-.5));col=mix(vec3(.12,.19,.12),vec3(.40,.43,.24),smoothstep(.025,.07,seam));}
+      if(vAnimalPart>4.5 && vAnimalPart<5.5) col=vec3(.67,.65,.42);`;
+    else if(kind==='seaLion') color=`vec3 col=mix(vec3(.28,.24,.16),vec3(.12,.16,.13),smoothstep(-.05,.13,vAnimal.y));if(vAnimalPart>4.5 && vAnimalPart<5.5) col=vec3(.66,.64,.47);`;
+    else if(kind==='saddle') color=`vec3 col=mix(vec3(.69,.53,.23),vec3(.79,.73,.43),smoothstep(-.2,.0,vAnimal.y));float saddle=exp(-pow(abs((vAnimal.z+.03)/.14),4.0))*smoothstep(-.02,.12,vAnimal.y);col=mix(col,vec3(.18,.13,.07),saddle);if(vAnimalPart>.5 && vAnimalPart<1.5)col=vec3(.72,.57,.16);`;
+    else if(kind==='surgeon') color=`vec3 col=vec3(.29,.40,.43);float bands=pow(.5+.5*cos(vAnimal.z*55.0),12.0);col*=1.0-bands*.32;if(vAnimalPart>.5 && vAnimalPart<1.5)col=vec3(.68,.65,.32);`;
+    else color=`vec3 col=mix(vec3(.79,.84,.80),vec3(${sharkLike?'.27,.36,.35':'.35,.48,.46'}),smoothstep(-.09,.12,vAnimal.y));
+      ${kind==='barracuda'?`col*=1.0-pow(.5+.5*cos(vAnimal.z*82.0+vAnimal.y*12.0),10.0)*.48;`:''}
+      ${sharkLike?`float gill=pow(.5+.5*cos((vAnimal.z+.2*vAnimal.y)*220.0),12.0)*step(.1,vAnimal.z)*step(vAnimal.z,.26)*step(abs(vAnimal.y),.07);col*=1.0-gill*.65;`:''}`;
+    sh.fragmentShader='varying vec3 vAnimal; varying float vAnimalPart; varying float vDistance;\n'+sh.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+      ${color}
+      if(vAnimalPart>1.5 && vAnimalPart<2.5)col=vec3(.006,.012,.013);
+      if(vAnimalPart>2.5 && vAnimalPart<3.5)col=vec3(.73,.70,.40);
+      diffuseColor.rgb=col;`).replace('#include <emissivemap_fragment>',`#include <emissivemap_fragment>
+      totalEmissiveRadiance+=diffuseColor.rgb*.045;`).replace('#include <dithering_fragment>',`#include <dithering_fragment>
+      // Blend into the fog before the 125m CPU LOD boundary; no silhouette pop-in.
+      gl_FragColor.rgb=mix(gl_FragColor.rgb,fogColor,smoothstep(65.0,105.0,vDistance));`);
+  };
+  m.customProgramCacheKey=()=> 'galapagos-'+kind+'-v2';return m;
+}
+const galDummy=new THREE.Object3D(),galP=new THREE.Vector3(),galQ=new THREE.Vector3();
+const galUp=new THREE.Vector3(0,1,0),galNormal=new THREE.Vector3();
+const galBatches=GALAPAGOS_SPECS.map(s=>{
+  const geo=galGeometry(s.kind),ph=new Float32Array(s.n);
+  for(let i=0;i<s.n;i++)ph[i]=i*2.399963;
+  geo.setAttribute('aPhase',new THREE.InstancedBufferAttribute(ph,1));
+  const mesh=new THREE.InstancedMesh(geo,galMaterial(s.kind),s.n);
+  mesh.name='galapagos-'+s.kind;mesh.frustumCulled=false;mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);scene.add(mesh);
+  return {s,mesh};
+});
+function updateGalapagos(t){
+  for(const b of galBatches){
+    const s=b.s,z=galZone(s.zone);
+    // Only cull beyond fully fog-blended range INCLUDING patrol extent.
+    b.mesh.visible=s.kind==='orca'||Math.hypot(camera.position.x-z.x,camera.position.z-z.z)<150;
+    if(!b.mesh.visible)continue;
+    for(let i=0;i<s.n;i++){
+      galSample(s,t,i,galP);galSample(s,t+.08,i,galQ);galDummy.position.copy(galP);
+      if(s.kind==='resting'){
+        const e=.3;
+        galNormal.set((gridH(galP.x-e,galP.z)-gridH(galP.x+e,galP.z))/(2*e),1,(gridH(galP.x,galP.z-e)-gridH(galP.x,galP.z+e))/(2*e)).normalize();
+        galDummy.quaternion.setFromUnitVectors(galUp,galNormal);galDummy.rotateY(.35+Math.sin(i*1.7)*.85);
+      }else{galDummy.lookAt(galQ);if(s.kind==='seaLion')galDummy.rotateZ(Math.sin(t*.42+i)*.45);}
+      galDummy.scale.setScalar(s.size*(s.kind==='resting'?1: .92+(i%5)*.04));galDummy.updateMatrix();b.mesh.setMatrixAt(i,galDummy.matrix);
+    }
+    b.mesh.instanceMatrix.needsUpdate=true;
+  }
+}
+(function volcanicHabitats(){
+  const rnd=lcg(.8321),rockGeo=new THREE.IcosahedronGeometry(1,1);
+  const rockMat=envMat(new THREE.MeshStandardMaterial({color:0x293e39,roughness:.98}),.18);
+  const rocks=new THREE.InstancedMesh(rockGeo,rockMat,176);rocks.frustumCulled=false;rocks.name='galapagos-basalt';
+  let index=0;
+  for(const z of GALAPAGOS_ZONES){
+    for(let i=0;i<22;i++){
+      const a=rnd()*Math.PI*2,r=(z.id==='rest'?9:5)+rnd()*(z.id==='rest'?5:9),x=z.x+Math.cos(a)*r,zz=z.z+Math.sin(a)*r;
+      const h=.4+rnd()*1.6;
+      galDummy.position.set(x,gridH(x,zz)-h*.55,zz);galDummy.rotation.set(0,rnd()*6.28,0);
+      galDummy.scale.set(1.1+rnd()*2.2,h,1+rnd()*2);galDummy.updateMatrix();rocks.setMatrixAt(index++,galDummy.matrix);
+    }
+  }
+  scene.add(rocks);
+  // A few low encrusting corals / algae at the entry, not giant colorful branches.
+  const algae=new THREE.InstancedMesh(new THREE.SphereGeometry(1,10,6),new THREE.MeshLambertMaterial({color:0x657557}),36);
+  for(let i=0;i<36;i++){
+    const x=(rnd()-.5)*18,zz=(rnd()-.5)*16;
+    galDummy.position.set(x,gridH(x,zz)+.025,zz);galDummy.rotation.set(0,0,0);galDummy.scale.set(.2+rnd()*.28,.07+rnd()*.10,.25+rnd()*.20);galDummy.updateMatrix();algae.setMatrixAt(i,galDummy.matrix);
+  }
+  algae.name='galapagos-sparse-algae';scene.add(algae);
+  const coral=new THREE.InstancedMesh(brainCoral(.43),new THREE.MeshLambertMaterial({color:0x8a8970}),12);
+  for(let i=0;i<12;i++){
+    const x=(rnd()-.5)*16,zz=(rnd()-.5)*14,sc=.17+rnd()*.24;
+    galDummy.position.set(x,gridH(x,zz)-.015,zz);galDummy.scale.setScalar(sc);galDummy.updateMatrix();coral.setMatrixAt(i,galDummy.matrix);
+  }
+  coral.name='galapagos-small-encrusting-coral';scene.add(coral);
+  const c=document.createElement('canvas');c.width=c.height=64;
+  const g=c.getContext('2d'),gradient=g.createRadialGradient(32,32,4,32,32,32);
+  gradient.addColorStop(0,'rgba(0,0,0,.78)');gradient.addColorStop(.45,'rgba(0,0,0,.38)');gradient.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gradient;g.fillRect(0,0,64,64);
+  const shadowGeo=new THREE.PlaneGeometry(1,1);shadowGeo.rotateX(-Math.PI/2);
+  const shadows=new THREE.InstancedMesh(shadowGeo,new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1}),9);
+  const resting=GALAPAGOS_SPECS.find(s=>s.kind==='resting');
+  for(let i=0;i<9;i++){
+    galSample(resting,0,i,galP);const x=galP.x,z=galP.z,e=.3;
+    galNormal.set((gridH(x-e,z)-gridH(x+e,z))/(2*e),1,(gridH(x,z-e)-gridH(x,z+e))/(2*e)).normalize();
+    galDummy.position.set(x,gridH(x,z)+.05,z);galDummy.quaternion.setFromUnitVectors(galUp,galNormal);galDummy.rotateY(.35+Math.sin(i*1.7)*.85);galDummy.scale.set(1.55,1,2.5);galDummy.updateMatrix();shadows.setMatrixAt(i,galDummy.matrix);
+  }
+  shadows.name='galapagos-resting-contact';shadows.frustumCulled=false;scene.add(shadows);
+})();
+let routeOn=false,galHudAt=-1,galCurrent='';
+$('routeBtn').addEventListener('click',()=>{routeOn=!routeOn;$('routeBtn').setAttribute('aria-pressed',String(routeOn));$('routeBtn').textContent=routeOn?'물길 힌트 끄기':'물길 힌트 켜기';$('routeHint').hidden=!routeOn;galHudAt=-1;});
+function updateGalHud(t){
+  if(t-galHudAt<.4)return;galHudAt=t;
+  let nearest=GALAPAGOS_ZONES[0],best=Infinity;
+  for(const z of GALAPAGOS_ZONES){const d=Math.hypot(posX-z.x,posZ-z.z);if(d<best){best=d;nearest=z;}}
+  galCurrent=nearest.id;
+  $('habitatName').textContent=best<nearest.r ? `${nearest.name} · ${nearest.min}–${nearest.max}m` : '고요한 물길 · 능선 사이';
+  if(routeOn){
+    let text='';
+    for(const id of nearest.next){const z=galZone(id),d=Math.hypot(z.x-posX,z.z-posZ),angle=Math.atan2(z.x-posX,z.z-posZ)-yaw;
+      const relative=Math.atan2(Math.sin(angle),Math.cos(angle));
+      const direction=Math.abs(relative)<.55?'앞쪽':Math.abs(relative)>2.5?'뒤쪽':relative>0?'왼쪽':'오른쪽';
+      text+=(text?' · ':'')+`${direction} ${z.name} ${Math.round(d)}m`;
+    }
+    $('routeHint').textContent=text;
+  }
+}
+// Read-only snapshots: no camera setters, live mesh references or mutable config exposed.
+Object.defineProperty(window,'__mulmitGalapagos',{value:Object.freeze({
+  snapshot:()=>({time:timeU.value,zone:galCurrent,position:{x:posX,z:posZ,depth},drawCalls:renderer.info.render.calls,
+    zones:GALAPAGOS_ZONES.map(z=>({...z,next:z.next.slice()})),
+    creatures:galBatches.map(b=>({kind:b.s.kind,count:b.s.n,anchor:b.s.zone,visible:b.mesh.visible})),
+    offshore:{camera:camera.position.toArray(),heading:[yaw,pitch],passagePeriod:2*Math.PI/.035,
+      animals:[0,1].map(i=>{const p=galSample(GALAPAGOS_SPECS[10],timeU.value,i,new THREE.Vector3());
+        return {world:p.toArray(),screen:p.clone().project(camera).toArray()};})}})
+}),writable:false});
 
 /* ---------- state ---------- */
 const myAz = Math.random()*Math.PI*2;
 const myR = 9 + Math.random()*5;
 let depth = 1.2, targetDepth = 1.2, autoDescent = false;
-let yaw = Math.atan2(-Math.cos(myAz)*myR, -Math.sin(myAz)*myR), pitch = 0.42;
+let yaw = 0, pitch = -0.22;
 let entered = false, enterTime = 0, breathEpoch = 0;
 let guideOn = true, soundOn = true;
 let holdDir = 0, lastInteract = 0;
 const BREATH = 9000, INHALE = 4000;
 /* free swimming */
-let posX = Math.cos(myAz)*myR, posZ = Math.sin(myAz)*myR;
+let posX = 0, posZ = -9;
 const swimVel = new THREE.Vector3();
 let yawRate = 0, roll = 0, kickPh = 0, hintDismissed = false;
 const keys = new Set();
-const SWIM_LIMIT = 75;
+const SWIM_LIMIT = 86;
 
 /* ---------- deep link: ?depth=&x=&z=&yaw=&pitch= ---------- */
 const QP = new URLSearchParams(location.search);
@@ -2074,8 +2272,14 @@ function syncPeers(list){
   updateTogether();
 }
 function updateTogether(){
-  const n = peers.size + 1;
-  $('together').textContent = n <= 1 ? '지금은 혼자 잠겨 있어요' : `지금 ${n}명이 함께 잠겨 있어요`;
+  const ready = subscribed && synced && (!entered || tracked);
+  const n = participantCount();
+  const pending = liveState === 'error' ? '바닷속 연결을 확인하지 못했어요' : liveState === 'reconnecting' ? '바닷속에 다시 연결하고 있어요' : '바닷속에 연결하고 있어요';
+  $('together').textContent = soloMode ? '지금 물속이 붐벼서 혼자 잠수하고 있어요' : !ready ? pending : n <= 1 ? '지금은 혼자 잠겨 있어요' : `지금 ${n}명이 함께 잠겨 있어요`;
+  const others = otherParticipantCount();
+  $('gateLive').textContent = soloMode ? '지금 물속이 가득 차 있어요' : !ready ? pending : others > 0 ? `지금 바닷속에 ${others}명이 있어요` : '지금 바닷속이 조용해요 — 첫 다이버가 될 수 있어요';
+  $('realtimeRetry').hidden = liveState !== 'error' && !soloMode;
+  $('gateRealtimeRetry').hidden = $('realtimeRetry').hidden;
 }
 /* ---------- realtime (Supabase): presence = who is here, broadcast = where they are ---------- */
 const SUPABASE_URL = 'https://bdchynoyysravyoazehl.supabase.co';
@@ -2084,10 +2288,41 @@ const ROOM_CAP = 150;           // above this, new visitors dive solo instead of
 const SEND_EVERY_MS = 650;      // position updates while moving (about 1.5 per second)
 const HEARTBEAT_MS = 5000;      // position refresh while still
 const myId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'd' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-let sbClient = null, channel = null, synced = false, tracked = false, soloMode = false;
+let sbClient = null, channel = null, subscribed = false, synced = false, tracked = false, soloMode = false;
+let liveState = 'connecting', generation = 0, retryTimer = null, watchdog = null, trackFlight = null, trackDirty = false, retryCount = 0, suspended = false;
+const RETRY_LIMIT = 3, TRACK_TIMEOUT_MS = 6000;
 let lastSendAt = 0;
 const peerInfo = new Map();
 const peerPos = new Map();
+function otherParticipantCount(){ return [...peerInfo.keys()].filter(id => id !== myId).length; }
+function participantCount(){ return otherParticipantCount() + (entered && tracked ? 1 : 0); }
+// Never log SDK errors: their objects/messages may contain URLs or credentials.
+function realtimeDiagnostic(operation, status){ console.warn('[mulmit realtime]', operation, status); }
+function selfMetadata(){
+  return {cc:myCC, b:breathEpoch, x:Math.round(posX*100)/100, z:Math.round(posZ*100)/100, d:Math.round(depth*10)/10, h:Math.round(yaw*100)/100};
+}
+function clearRealtimeTimers(){ clearTimeout(retryTimer); clearTimeout(watchdog); retryTimer = watchdog = null; }
+function resetRealtime(){
+  generation++; clearRealtimeTimers();
+  if(trackFlight) clearTimeout(trackFlight.timer);
+  subscribed = synced = tracked = false; trackFlight = null; trackDirty = false;
+  peerInfo.clear(); peerPos.clear(); rebuildPeers();
+}
+function removeRealtimeChannel(ch){
+  if(!ch || !sbClient) return;
+  try{ Promise.resolve(sbClient.removeChannel(ch)).catch(()=>realtimeDiagnostic('cleanup', 'rejected')); }
+  catch(e){ realtimeDiagnostic('cleanup', 'exception'); }
+}
+function scheduleReconnect(){
+  if(suspended || soloMode || retryTimer || retryCount >= RETRY_LIMIT) return;
+  const gen = generation;
+  retryTimer = setTimeout(()=>{ retryTimer = null; if(gen === generation) connectRealtime(true); }, 750 * Math.pow(2, retryCount++));
+}
+function failRealtime(operation, status){
+  realtimeDiagnostic(operation, status);
+  const old = channel; channel = null;
+  liveState = 'error'; resetRealtime(); removeRealtimeChannel(old); updateTogether(); scheduleReconnect();
+}
 function rebuildPeers(){
   const list = [];
   for(const [id, info] of peerInfo){
@@ -2099,61 +2334,85 @@ function rebuildPeers(){
   syncPeers(list);
 }
 function sendPresence(force){
-  if(!channel || !tracked || !entered) return;
+  if(!channel || !subscribed || !tracked || !entered) return;
   const now = performance.now();
   const d = Math.round(depth*10)/10;
   const moved = Math.hypot(posX - lastSentX, posZ - lastSentZ);
   const changed = Math.abs(d - lastSentDepth) >= 0.3 || moved >= 0.25 || Math.abs(yaw - lastSentYaw) >= 0.12;
   if(!force && !(changed && now - lastSendAt > SEND_EVERY_MS) && now - lastSendAt < HEARTBEAT_MS) return;
   lastSentDepth = d; lastSentX = posX; lastSentZ = posZ; lastSentYaw = yaw; lastSendAt = now;
-  channel.send({type:'broadcast', event:'pos', payload:{id:myId, x:Math.round(posX*100)/100, z:Math.round(posZ*100)/100, d, h:Math.round(yaw*100)/100}}).catch(()=>{});
+  const ch = channel, gen = generation;
+  try{
+    Promise.resolve(ch.send({type:'broadcast', event:'pos', payload:{id:myId, ...selfMetadata()}})).then(result=>{
+      if(gen === generation && ch === channel && result !== 'ok') failRealtime('position', 'not-ok');
+    }, ()=>{ if(gen === generation && ch === channel) failRealtime('position', 'rejected'); });
+  }catch(e){ if(gen === generation) failRealtime('position', 'exception'); }
 }
 function trackSelf(){
-  if(!channel || !synced || tracked || soloMode || !entered) return;
-  tracked = true;
-  channel.track({cc: myCC, b: breathEpoch}).catch(()=>{});
-  sendPresence(true);
+  if(!channel || !subscribed || !synced || tracked || trackFlight || soloMode || !entered) return;
+  // Count only entered presence keys, never gate-only websocket visitors or self.
+  if(otherParticipantCount() >= ROOM_CAP){ diveSolo(); return; }
+  const ch = channel, gen = generation, flight = {};
+  trackFlight = flight; trackDirty = false;
+  const timer = setTimeout(()=>{
+    if(gen === generation && trackFlight === flight) failRealtime('track', 'timeout');
+  }, TRACK_TIMEOUT_MS);
+  flight.timer = timer;
+  const done = (result, rejected) => {
+    clearTimeout(timer);
+    if(gen !== generation || ch !== channel || trackFlight !== flight) return;
+    trackFlight = null;
+    if(rejected || result !== 'ok'){ failRealtime('track', rejected ? 'rejected' : 'not-ok'); return; }
+    tracked = true; liveState = 'connected'; retryCount = 0; updateTogether(); sendPresence(true);
+    if(trackDirty) retrackSelf();
+  };
+  try{ Promise.resolve(ch.track(selfMetadata())).then(result=>done(result, false), ()=>done(null, true)); }
+  catch(e){ done(null, true); }
 }
 function retrackSelf(){
-  if(channel && tracked) channel.track({cc: myCC, b: breathEpoch}).catch(()=>{});
+  if(trackFlight){ trackDirty = true; return; }
+  if(!entered) return;
+  tracked = false; updateTogether(); trackSelf();
 }
-function diveSolo(msg){
+function diveSolo(){
+  const old = channel; channel = null;
   soloMode = true;
-  peerInfo.clear(); peerPos.clear(); rebuildPeers();
-  $('together').textContent = msg;
-  $('gateLive').textContent = '지금 물속이 가득 차 있어요';
+  resetRealtime(); removeRealtimeChannel(old); updateTogether();
 }
-(function connectRealtime(){
-  if(!window.supabase || typeof window.supabase.createClient !== 'function') return;
+function connectRealtime(reconnecting = false){
+  const old = channel; channel = null; soloMode = false; suspended = false;
+  liveState = reconnecting ? 'reconnecting' : 'connecting'; resetRealtime(); removeRealtimeChannel(old);
+  const gen = generation;
+  if(!window.supabase || typeof window.supabase.createClient !== 'function'){ failRealtime('sdk', 'unavailable'); return; }
   try{
-    sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {realtime:{params:{eventsPerSecond:5}}});
-    const ch = sbClient.channel('mulmit-sea', {config:{presence:{key:myId}, broadcast:{self:false}}});
+    if(!sbClient) sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {realtime:{params:{eventsPerSecond:5}}});
+    // Explicit opt-in is needed for the initial untracked listener to receive Presence sync.
+    const ch = sbClient.channel('mulmit-sea', {config:{presence:{key:myId, enabled:true}, broadcast:{self:false}}});
+    channel = ch;
+    const current = () => gen === generation && ch === channel && !suspended;
+    watchdog = setTimeout(()=>{ if(current()) failRealtime('subscribe', 'timeout'); }, 10000);
     ch.on('presence', {event:'sync'}, () => {
+      if(!current()) return;
       const st = ch.presenceState();
-      if(!entered && !soloMode){
-        const gn = Object.keys(st).length;
-        $('gateLive').textContent = gn > 0 ? `지금 바닷속에 ${gn}명이 있어요` : '지금 바닷속이 조용해요 — 첫 다이버가 될 수 있어요';
-      }
-      if(!synced){
-        synced = true;
-        if(Object.keys(st).length >= ROOM_CAP){
-          sbClient.removeChannel(ch); channel = null;
-          diveSolo('지금 물속이 붐벼서 혼자 잠수하고 있어요');
-          return;
-        }
-        channel = ch;
-        trackSelf();
-      }
+      synced = true;
+      if(subscribed) clearTimeout(watchdog);
       peerInfo.clear();
       for(const id of Object.keys(st)){
         const metas = st[id] || [];
+        if(!metas.length) continue;
         const m = metas[metas.length - 1] || {};
         peerInfo.set(id, {cc: typeof m.cc === 'string' ? m.cc : '', b: Number.isFinite(m.b) ? m.b : 0});
+        // Presence is a join-time seed only. A broadcast is always fresher.
+        if(id !== myId && !peerPos.has(id) && [m.x,m.z,m.d,m.h].every(Number.isFinite)) peerPos.set(id, {x:m.x,z:m.z,d:m.d,h:m.h});
       }
       for(const id of [...peerPos.keys()]) if(!peerInfo.has(id)) peerPos.delete(id);
       rebuildPeers();
+      trackSelf();
+      if(subscribed && !entered) { liveState = 'connected'; retryCount = 0; }
+      updateTogether();
     });
     ch.on('broadcast', {event:'pos'}, msg => {
+      if(!current()) return;
       const p = (msg && msg.payload) || {};
       if(typeof p.id !== 'string' || p.id === myId || p.id.length > 64) return;
       if(![p.x, p.z, p.d, p.h].every(Number.isFinite)) return;
@@ -2173,26 +2432,48 @@ function diveSolo(msg){
       if(isNew) lastSendAt = Math.min(lastSendAt, performance.now() - HEARTBEAT_MS + 400);
     });
     ch.on('broadcast', {event:'wave'}, msg => {
+      if(!current()) return;
       const p = (msg && msg.payload) || {};
       if(typeof p.id !== 'string' || p.id === myId) return;
       const e = peers.get(p.id);
       if(e) e.waveUntil = Date.now() + 2600;
     });
     ch.subscribe(status => {
-      if(status === 'SUBSCRIBED' && !soloMode) channel = channel || ch;
-      if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT'){ tracked = false; }
+      if(!current()) return;
+      if(status === 'SUBSCRIBED'){
+        subscribed = true;
+        if(synced) clearTimeout(watchdog);
+        if(synced && !entered) { liveState = 'connected'; retryCount = 0; }
+        trackSelf(); updateTogether();
+      }
+      if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') failRealtime('channel', status);
     });
-  }catch(e){ sbClient = null; channel = null; }
-})();
-setTimeout(()=>{ if(!synced && !entered) $('gateLive').textContent = '지금은 조용한 바다예요'; }, 8000);
+  }catch(e){ failRealtime('connect', 'exception'); }
+  updateTogether();
+}
+$('realtimeRetry').addEventListener('click', ()=>{ retryCount = 0; connectRealtime(true); });
+$('gateRealtimeRetry').addEventListener('click', ()=>{ retryCount = 0; connectRealtime(true); });
+window.addEventListener('pagehide', ()=>{
+  suspended = true; liveState = 'reconnecting';
+  const old = channel; channel = null; resetRealtime(); removeRealtimeChannel(old);
+});
+window.addEventListener('pageshow', ()=>{ if(suspended){ retryCount = 0; connectRealtime(true); } });
+document.addEventListener('visibilitychange', ()=>{
+  if(!document.hidden && !suspended){
+    if(channel && subscribed && synced) retrackSelf();
+    else { retryCount = 0; connectRealtime(true); }
+  }
+});
+window.addEventListener('online', ()=>{ retryCount = 0; connectRealtime(true); });
+connectRealtime();
 
 /* ---------- input ---------- */
 let drag = null;
-const touchPoints = new Map(), padPointers = new Map();
+const touchPoints = new Map();
 let pinchDistance = null, pinchThrust = 0, pinchUntil = 0;
 const mobileControls = matchMedia('(pointer:coarse), (max-width:900px)');
 function updateControlHint(){
-  $('hint').innerHTML = mobileControls.matches ? '왼쪽 패드로 이동 · 오른쪽 버튼으로 수심 조절<br>화면을 끌어 둘러보기 · 두 손가락을 벌리면 앞으로, 오므리면 뒤로' : '방향키로 헤엄치고, Q·E로 깊이를 조절해요<br>G는 인사, 마우스를 끌면 고개를 돌릴 수 있어요';
+  $('hint').innerHTML = mobileControls.matches ? '한 손가락으로 끌면 둘러보고, 두 손가락을 벌리면 앞으로 · 오므리면 뒤로<br>오른쪽 버튼으로 수심을 조절해요' : '방향키로 헤엄치고, Q·E로 깊이를 조절해요<br>G는 인사, 마우스를 끌면 고개를 돌릴 수 있어요';
 }
 updateControlHint();
 if(mobileControls.addEventListener) mobileControls.addEventListener('change',updateControlHint);
@@ -2200,30 +2481,14 @@ function markInteraction(){autoDescent = false; lastInteract = performance.now()
 function touchGap(){const p=[...touchPoints.values()];return p.length===2?Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y):null;}
 function pinchAmount(previous,current){return Math.max(-1,Math.min(1,Math.log(Math.max(1,current)/Math.max(1,previous))*9));}
 function stopMobileMotion(){
-  padPointers.clear(); touchPoints.clear(); pinchDistance = null; pinchThrust = 0; pinchUntil = 0; drag = null; holdDir = 0;
-  document.querySelectorAll('[data-swim]').forEach(btn=>btn.classList.remove('active'));
+  touchPoints.clear(); pinchDistance = null; pinchThrust = 0; pinchUntil = 0; drag = null; holdDir = 0;
   swimVel.set(0,0,0); targetDepth = depth; autoDescent = false;
 }
 function clearAllInput(){ keys.clear();stopMobileMotion(); }
-function padAxes(){
-  const directions = new Set(padPointers.values());
-  return {forward:(directions.has('fwd')?1:0)-(directions.has('back')?1:0),side:(directions.has('right')?1:0)-(directions.has('left')?1:0)};
-}
 function swimDirection(heading,tilt,forward,side){
   const n=Math.max(1,Math.hypot(forward,side));forward/=n;side/=n;
   return {x:Math.sin(heading)*Math.cos(tilt)*forward-Math.cos(heading)*side,y:Math.sin(tilt)*forward,z:Math.cos(heading)*Math.cos(tilt)*forward+Math.sin(heading)*side};
 }
-document.querySelectorAll('[data-swim]').forEach(btn=>{
-  btn.addEventListener('pointerdown',e=>{
-    if(!entered || $('inviteDialog').open) return;
-    e.preventDefault();btn.setPointerCapture(e.pointerId);padPointers.set(e.pointerId,btn.dataset.swim);btn.classList.add('active');markInteraction();
-  });
-  const release=e=>{padPointers.delete(e.pointerId);if(![...padPointers.values()].includes(btn.dataset.swim))btn.classList.remove('active');if(!padPointers.size){swimVel.set(0,0,0);targetDepth=depth;}lastInteract=performance.now();};
-  btn.addEventListener('pointerup',release);btn.addEventListener('pointercancel',release);btn.addEventListener('lostpointercapture',release);
-  btn.addEventListener('keydown',e=>{if((e.key===' '||e.key==='Enter')&&entered&&!$('inviteDialog').open){e.preventDefault();padPointers.set('key-'+btn.dataset.swim,btn.dataset.swim);btn.classList.add('active');markInteraction();}});
-  btn.addEventListener('keyup',e=>{if(e.key===' '||e.key==='Enter')release({pointerId:'key-'+btn.dataset.swim});});
-});
-$('swimStop').addEventListener('click',()=>{clearAllInput();showToast('이동을 멈췄어요');});
 canvas.addEventListener('pointerdown', e => {
   if(!entered || $('inviteDialog').open) return;
   e.preventDefault();canvas.setPointerCapture(e.pointerId);lastInteract=performance.now();
@@ -2345,8 +2610,13 @@ function showToast(msg){
   showToast._t = setTimeout(()=>el.classList.remove('on'), 3600);
 }
 function sendWave(){
-  if(!channel || !tracked){ showToast('지금은 혼자 잠수 중이에요'); return; }
-  channel.send({type:'broadcast', event:'wave', payload:{id:myId}}).catch(()=>{});
+  if(!channel || !subscribed || !tracked){ showToast(soloMode ? '지금은 혼자 잠수 중이에요' : '실시간 연결을 확인하고 있어요'); return; }
+  const ch = channel, gen = generation;
+  try{
+    Promise.resolve(ch.send({type:'broadcast', event:'wave', payload:{id:myId}})).then(result=>{
+      if(gen === generation && ch === channel && result !== 'ok') failRealtime('wave', 'not-ok');
+    }, ()=>{ if(gen === generation && ch === channel) failRealtime('wave', 'rejected'); });
+  }catch(e){ if(gen === generation) failRealtime('wave', 'exception'); }
   showToast('물결을 보냈어요');
   for(let k=0;k<7;k++){
     spawnBubble(camPos.x + fwd.x*0.8 + (Math.random()-.5)*0.5, camPos.y - 0.25 + Math.random()*0.2, camPos.z + fwd.z*0.8 + (Math.random()-.5)*0.5);
@@ -2394,7 +2664,8 @@ async function takeShot(){
     g.font = '23px "Gowun Batang", serif'; g.fillStyle = '#a6f4e4';
     g.fillText(`수심 ${spot.depth.toFixed(2)}m  ·  좌표 X ${spot.x.toFixed(2)} / Z ${spot.z.toFixed(2)}`,40,imageH+82);
     g.font = '18px "Gowun Batang", serif'; g.fillStyle = '#bfe0e4';
-    g.fillText(`다이브 타임 ${fmt((performance.now()-enterTime)/1000)} · ${peers.size+1}명과 함께 · 초대 링크를 열고 입수해요`,40,imageH+126);
+    const company = soloMode ? '혼자 잠수 중' : subscribed && synced && tracked ? `${participantCount()}명과 함께` : '실시간 연결 확인 중';
+    g.fillText(`다이브 타임 ${fmt((performance.now()-enterTime)/1000)} · ${company} · 초대 링크를 열고 입수해요`,40,imageH+126);
     g.font = '17px monospace';
     wrapInviteText(g, url || '배포된 사이트에서 열면 이 장소의 초대 링크가 만들어져요.',40,imageH+170,W-80,25);
     const blob = await new Promise(resolve => c.toBlob(resolve,'image/png'));
@@ -2451,24 +2722,17 @@ $('inviteDialog').addEventListener('close',()=>{ keys.clear(); lastInteract = pe
 $('inviteCopy').addEventListener('click',copyInviteLink);
 $('inviteSave').addEventListener('click',saveInviteImage);
 $('inviteShare').addEventListener('click',shareInvite);
-const ENCOUNTERS = [
-  {key:'shark', name:'고래상어', pos:(t,out)=>sharkPath(t,out), dist:24},
-  {key:'manta', name:'만타가오리', pos:(t,out)=>mantaPath(t,out), dist:16},
-  {key:'turtle', name:'바다거북', pos:(t,out)=>out.copy(turtle.g.position), dist:7},
-  {key:'sardine', name:'정어리 떼', pos:(t,out)=>schoolCenter(schools[0], t, out), dist:9},
-  {key:'reef-shark', name:'리프상어', pos:(t,out)=>out.copy(marineLife.sharkCenter), dist:9},
-  {key:'dolphin', name:'큰돌고래', pos:(t,out)=>out.copy(marineLife.dolphinCenter), dist:10},
-  {key:'barracuda', name:'바라쿠다 떼', pos:(t,out)=>out.copy(marineLife.barracudaCenter), dist:8},
-  {key:'clownfish', name:'흰동가리', pos:(t,out)=>{
-    let best=Infinity;
-    for(const c of marineLife.clownCenters){ const d=camPos.distanceToSquared(c); if(d<best){best=d;out.copy(c);} }
-    return out;
-  }, dist:3}
-];
+const ENCOUNTERS = GALAPAGOS_SPECS.map(s=>({key:'gal-'+s.kind,name:s.label,s,hold:0}));
 function checkEncounters(t){
   for(const c of ENCOUNTERS){
-    c.pos(t, vA);
-    c.hold = camPos.distanceTo(vA) < c.dist ? (c.hold||0) + 1 : 0;
+    let seen=false;
+    for(let i=0;i<c.s.n;i++){
+      galSample(c.s,t,i,vA);vB.copy(vA).sub(camPos);
+      const d=vB.length(),reach=c.s.kind==='orca'?38:c.s.kind==='crevice'?5:14;
+      // A nearby habitat behind your head is not a sighting.
+      if(d<reach && d>.15 && vB.dot(fwd)/d>.78){seen=true;break;}
+    }
+    c.hold = seen ? c.hold+1 : 0;
     if(c.hold >= 3 && !stats.met[c.key]){
       stats.met[c.key] = 1;
       saveStats();
@@ -2523,22 +2787,20 @@ function frame(){
   if(vDir) targetDepth = Math.max(MIN_DEPTH, Math.min(MAX_DEPTH, targetDepth + vDir*2.4*dt));
 
   // swimming: fin thrust with water drag and glide
-  const pad=padAxes();
   if(performance.now()>pinchUntil && pinchThrust!==0){
     pinchThrust=0;
-    if(!pad.forward && !pad.side && !keys.size){swimVel.set(0,0,0);targetDepth=depth;}
+    if(!keys.size){swimVel.set(0,0,0);targetDepth=depth;}
   }
   const keyboardThrust=(keys.has('fwd')?1:0)-(keys.has('back')?.45:0);
-  const thrust=inputAllowed?Math.max(-1,Math.min(1,keyboardThrust+pad.forward+pinchThrust)):0;
-  const side=inputAllowed?pad.side:0;
+  const thrust=inputAllowed?Math.max(-1,Math.min(1,keyboardThrust+pinchThrust)):0;
   const turn = inputAllowed ? (keys.has('left') ? 1 : 0) - (keys.has('right') ? 1 : 0) : 0;
   yawRate += (turn*0.8 - yawRate)*Math.min(1, dt*2.5);
   yaw += yawRate*dt;
   roll += (yawRate*0.09 - roll)*Math.min(1, dt*2);
   {
-    const direction=swimDirection(yaw,pitch,thrust,side);
-    const wantX=direction.x*1.15,wantY=direction.y*1.15,wantZ=direction.z*1.15;
-    const k = Math.min(1, dt*(thrust !== 0 || side !== 0 ? 3 : 0.45));
+    const direction=swimDirection(yaw,pitch,thrust,0);
+    const wantX=direction.x*1.75,wantY=direction.y*1.75,wantZ=direction.z*1.75;
+    const k = Math.min(1, dt*(thrust !== 0 ? 3 : 0.45));
     swimVel.x += (wantX - swimVel.x)*k; swimVel.y += (wantY - swimVel.y)*k; swimVel.z += (wantZ - swimVel.z)*k;
     posX += swimVel.x*dt; posZ += swimVel.z*dt;
     if(Math.abs(swimVel.y) > 0.01){
@@ -2548,7 +2810,7 @@ function frame(){
     }
     const rr = Math.hypot(posX, posZ);
     if(rr > SWIM_LIMIT){ posX *= SWIM_LIMIT/rr; posZ *= SWIM_LIMIT/rr; swimVel.x *= 0.5; swimVel.z *= 0.5; }
-    if(thrust !== 0 || turn !== 0 || side !== 0) lastInteract = performance.now();
+    if(thrust !== 0 || turn !== 0) lastInteract = performance.now();
   }
   const swimSpeed = swimVel.length();
   kickPh += dt*(2.4 + swimSpeed*2.0)*Math.min(1, swimSpeed*3);
@@ -2556,6 +2818,9 @@ function frame(){
   const diff = targetDepth - depth;
   depth += Math.sign(diff) * Math.min(Math.abs(diff), maxSpeed*dt);
   if(autoDescent && Math.abs(diff) < 0.05) autoDescent = false;
+  // Stay above the actual triangular seabed when swimming onto a raised shelf.
+  const floorDepth=Math.max(MIN_DEPTH,-gridH(posX,posZ)-1.15);
+  if(depth>floorDepth){depth=floorDepth;targetDepth=Math.min(targetDepth,floorDepth);swimVel.y=Math.max(0,swimVel.y);}
 
   let ph = 0, inhaling = false;
   if(entered){
@@ -2593,8 +2858,8 @@ function frame(){
   scene.fog.color.copy(wcol);
   scene.fog.density = 0.02 + 0.02*(depth/40);
   const lightK = 1 - Math.min(1, depth/40);
-  hemi.intensity = 0.32 + 0.6*lightK;
-  sun.intensity = 0.12 + 0.7*lightK;
+  hemi.intensity = 0.48 + 0.5*lightK;
+  sun.intensity = 0.23 + 0.6*lightK;
   for(const m of rayMats) m.uniforms.uI.value = 0.05 + 0.08*lightK;
   for(const m of envMats) m.envMapIntensity = m.userData.envBase*(0.25 + 0.75*lightK);
   if(ambLP) ambLP.frequency.value = Math.max(240, 700 - depth*11);
@@ -2653,18 +2918,8 @@ function frame(){
   }
 
   // sea life
-  updateSchools(t, dt, depth);
-  updateJellies(t);
-  updateTurtle(t);
-  mantaDepth = easeTo(mantaDepth, Math.min(32, Math.max(4, depth - 5)), 0.18, dt);
-  mantaPath(t, mp); mantaPath(t + 0.5, mn); mantaPath(t + 2.0, mq);
-  manta.position.copy(mp); manta.lookAt(mn);
-  vA.copy(mn).sub(mp).normalize(); vB.copy(mq).sub(mn).normalize();
-  manta.rotateZ(Math.max(-0.45, Math.min(0.45, (vA.x*vB.z - vA.z*vB.x)*6)));
-  sharkDepth = easeTo(sharkDepth, Math.min(33, Math.max(5, depth + 1.5)), 0.12, dt);
-  sharkPath(t, mp); sharkPath(t + 0.6, mn);
-  shark.position.copy(mp); shark.lookAt(mn);
-  updateMarineLife(t, dt, depth);
+  updateGalapagos(t);
+  if(entered)updateGalHud(t);
   updateBubbles(dt, t);
   snowMat.uniforms.uCam.value.copy(camPos);
   snowMat.uniforms.uScale.value = pxScale;
