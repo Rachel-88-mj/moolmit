@@ -2643,18 +2643,35 @@ connectRealtime();
 /* ---------- input ---------- */
 let drag = null;
 const touchPoints = new Map();
-let pinchDistance = null, pinchThrust = 0, pinchUntil = 0;
+let pinchDistance = null, pinchThrust = 0, touchBlocked = false;
+// Pick ONE touch transport for this page. Native TouchEvents provide an atomic
+// pair on iOS/Android; PointerEvents remain the fallback and mouse/pen path.
+const nativeTouchInput = 'ontouchstart' in window;
 const mobileControls = matchMedia('(pointer:coarse), (max-width:900px)');
 function updateControlHint(){
-  $('hint').innerHTML = mobileControls.matches ? '한 손가락으로 끌면 둘러보고, 두 손가락을 벌리면 앞으로 · 오므리면 뒤로<br>오른쪽 버튼으로 수심을 조절해요' : '방향키로 헤엄치고, Q·E로 깊이를 조절해요<br>G는 인사, 마우스를 끌면 고개를 돌릴 수 있어요';
+  $('hint').innerHTML = mobileControls.matches ? '한 손가락으로 둘러보고, 두 손가락을 벌리면 앞으로 · 오므리면 뒤로<br>간격을 유지하면 계속 헤엄쳐요 · 하나라도 떼면 멈춰요' : '방향키로 헤엄치고, Q·E로 깊이를 조절해요<br>G는 인사, 마우스를 끌면 고개를 돌릴 수 있어요';
 }
 updateControlHint();
 if(mobileControls.addEventListener) mobileControls.addEventListener('change',updateControlHint);
 function markInteraction(){autoDescent = false; lastInteract = performance.now();}
 function touchGap(){const p=[...touchPoints.values()];return p.length===2?Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y):null;}
-function pinchAmount(previous,current){return Math.max(-1,Math.min(1,Math.log(Math.max(1,current)/Math.max(1,previous))*9));}
+function stopPinch(){pinchThrust=0;swimVel.set(0,0,0);targetDepth=depth;}
+function updatePinch(){
+  const gap=touchGap();
+  if(gap===null || pinchDistance===null || touchBlocked) return;
+  const delta=gap-pinchDistance, amount=Math.abs(delta);
+  // 8 CSS px engages, 4 px releases: jitter cannot chatter the throttle.
+  // The gesture-start baseline NEVER follows individual pointermove events.
+  if(amount<=4 || (pinchThrust===0 && amount<8)){
+    if(pinchThrust!==0) stopPinch();
+    return;
+  }
+  if(amount<8 && Math.sign(delta)!==Math.sign(pinchThrust)){stopPinch();return;}
+  pinchThrust=Math.sign(delta)*Math.min(1,Math.max(.35,(amount-4)/28));
+  markInteraction();
+}
 function stopMobileMotion(){
-  touchPoints.clear(); pinchDistance = null; pinchThrust = 0; pinchUntil = 0; drag = null; holdDir = 0;
+  touchPoints.clear(); pinchDistance = null; pinchThrust = 0; touchBlocked = false; drag = null; holdDir = 0;
   swimVel.set(0,0,0); targetDepth = depth; autoDescent = false;
 }
 function clearAllInput(){ keys.clear();stopMobileMotion(); }
@@ -2731,44 +2748,104 @@ function swimDirection(heading,tilt,forward,side){
   const n=Math.max(1,Math.hypot(forward,side));forward/=n;side/=n;
   return {x:Math.sin(heading)*Math.cos(tilt)*forward-Math.cos(heading)*side,y:Math.sin(tilt)*forward,z:Math.cos(heading)*Math.cos(tilt)*forward+Math.sin(heading)*side};
 }
+function beginSeaTouch(id,x,y){
+  touchPoints.set(id,{x,y});
+  if(touchBlocked){drag=null;return;}
+  if(touchPoints.size>2){touchBlocked=true;pinchDistance=null;drag=null;stopPinch();return;}
+  if(touchPoints.size===2){
+    drag=null;pinchDistance=touchGap();stopPinch();yawRate=0;markInteraction();return;
+  }
+  drag={id,x,y};
+}
+function moveSeaLook(id,x,y){
+  if(touchBlocked || !drag || id!==drag.id) return;
+  yaw+=(x-drag.x)*0.0042;
+  pitch=Math.max(-1.2,Math.min(1.25,pitch+(y-drag.y)*0.0034));
+  drag.x=x;drag.y=y;lastInteract=performance.now();
+}
+function endSeaTouch(id){
+  if(!touchPoints.has(id)) return;
+  const wasPinching=touchPoints.size>1;
+  touchPoints.delete(id);
+  if(wasPinching || touchBlocked){pinchDistance=null;stopPinch();}
+  drag=null;
+  if(!touchPoints.size) touchBlocked=false;
+  else if(!touchBlocked && touchPoints.size===1){
+    const [remaining,p]=[...touchPoints.entries()][0];drag={id:remaining,x:p.x,y:p.y};
+  }
+}
 canvas.addEventListener('pointerdown', e => {
+  if(e.pointerType==='touch' && nativeTouchInput) return;
   if(!entered || $('inviteDialog').open) return;
   if(e.pointerType === 'mouse' && e.button !== 0) return;
   leaveTextEntry();
-  e.preventDefault();canvas.setPointerCapture(e.pointerId);lastInteract=performance.now();
+  e.preventDefault();
+  // Capture may fail when the UA has already canceled the pointer. Do not let
+  // an exception prevent the first touch / focus escape from being processed.
+  try{canvas.setPointerCapture(e.pointerId);}catch(_){}
+  lastInteract=performance.now();
   if(e.pointerType==='touch'){
-    touchPoints.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    if(touchPoints.size>1){drag=null;pinchDistance=touchGap();pinchThrust=0;return;}
+    beginSeaTouch(e.pointerId,e.clientX,e.clientY);return;
   }
   drag = {x:e.clientX,y:e.clientY,id:e.pointerId};
 });
 canvas.addEventListener('pointermove', e => {
+  if(e.pointerType==='touch' && nativeTouchInput) return;
   if(touchPoints.has(e.pointerId)){
     touchPoints.set(e.pointerId,{x:e.clientX,y:e.clientY});
     if(touchPoints.size>1){
-      e.preventDefault();const distance=touchGap();
-      if(distance!==null && pinchDistance!==null){pinchThrust=pinchAmount(pinchDistance,distance);pinchUntil=performance.now()+160;markInteraction();}
-      pinchDistance=distance;return;
+      e.preventDefault();updatePinch();return;
     }
   }
-  if(!drag || e.pointerId !== drag.id) return;
-  yaw += (e.clientX - drag.x)*0.0042;
-  pitch = Math.max(-1.2, Math.min(1.25, pitch + (e.clientY - drag.y)*0.0034));
-  drag.x = e.clientX; drag.y = e.clientY; lastInteract = performance.now();
+  moveSeaLook(e.pointerId,e.clientX,e.clientY);
 });
 const endDrag = e => {
-  const wasPinching=touchPoints.size>1;
-  touchPoints.delete(e.pointerId);
-  if(wasPinching){
-    pinchDistance=null;pinchThrust=0;pinchUntil=0;swimVel.set(0,0,0);targetDepth=depth;
-    if(touchPoints.size===1){const [id,p]=[...touchPoints.entries()][0];drag={id,x:p.x,y:p.y};}
-    else drag=null;
+  if(e.pointerType==='touch' && nativeTouchInput) return;
+  if(touchPoints.has(e.pointerId)){
+    if(e.type==='pointercancel' || e.type==='lostpointercapture'){
+      stopPinch();pinchDistance=null;drag=null;touchBlocked=true;
+    }
+    endSeaTouch(e.pointerId);
   }else if(drag && e.pointerId===drag.id) drag=null;
   lastInteract=performance.now();
 };
 canvas.addEventListener('pointerup', endDrag);
 canvas.addEventListener('pointercancel', endDrag);
 canvas.addEventListener('lostpointercapture', endDrag);
+if(nativeTouchInput){
+  const prevent=e=>{if(e.cancelable) e.preventDefault();};
+  canvas.addEventListener('touchstart',e=>{
+    if(!entered || $('inviteDialog').open) return;
+    leaveTextEntry();prevent(e);lastInteract=performance.now();
+    for(const t of e.touches) if(touchPoints.has(t.identifier)) touchPoints.set(t.identifier,{x:t.clientX,y:t.clientY});
+    for(const t of e.changedTouches) beginSeaTouch(t.identifier,t.clientX,t.clientY);
+  },{passive:false});
+  canvas.addEventListener('touchmove',e=>{
+    if(!touchPoints.size) return;
+    prevent(e);
+    for(const t of e.touches) if(touchPoints.has(t.identifier)) touchPoints.set(t.identifier,{x:t.clientX,y:t.clientY});
+    if(touchPoints.size>1) updatePinch();
+    else for(const [id,p] of touchPoints) moveSeaLook(id,p.x,p.y);
+  },{passive:false});
+  canvas.addEventListener('touchend',e=>{
+    if(touchPoints.size) prevent(e);
+    for(const t of e.touches) if(touchPoints.has(t.identifier)) touchPoints.set(t.identifier,{x:t.clientX,y:t.clientY});
+    for(const t of e.changedTouches) endSeaTouch(t.identifier);
+  },{passive:false});
+  canvas.addEventListener('touchcancel',e=>{
+    // A canceled sequence cannot resume until every sea contact has ended.
+    stopPinch();pinchDistance=null;drag=null;touchBlocked=touchPoints.size>0;
+    const alive=new Set(Array.from(e.touches,t=>t.identifier));
+    for(const id of touchPoints.keys()) if(!alive.has(id)) touchPoints.delete(id);
+    if(!touchPoints.size) touchBlocked=false;
+  },{passive:false});
+}
+// UI contacts are never steering contacts. A third/UI finger aborts any sea
+// throttle until the existing contacts lift; bubbling captured sea events don't.
+const abortForUI=e=>{
+  if(e.target!==canvas && touchPoints.size){stopPinch();pinchDistance=null;drag=null;touchBlocked=true;}
+};
+document.addEventListener(nativeTouchInput?'touchstart':'pointerdown',abortForUI,{capture:true,passive:true});
 canvas.addEventListener('wheel', e => {
   if(!entered) return;
   e.preventDefault();
@@ -2810,6 +2887,8 @@ window.addEventListener('keydown', e => {
 window.addEventListener('keyup', e => { const k = KEYMAP[e.code]; if(k) keys.delete(k); });
 window.addEventListener('blur', clearAllInput);
 window.addEventListener('pagehide', clearAllInput);
+window.addEventListener('resize', clearAllInput);
+window.addEventListener('orientationchange', clearAllInput);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)clearAllInput();});
 $('soundBtn').addEventListener('click', () => {
   soundOn = !soundOn;
@@ -3051,10 +3130,6 @@ function frame(){
   if(vDir) targetDepth = Math.max(MIN_DEPTH, Math.min(MAX_DEPTH, targetDepth + vDir*2.4*dt));
 
   // swimming: fin thrust with water drag and glide
-  if(performance.now()>pinchUntil && pinchThrust!==0){
-    pinchThrust=0;
-    if(!keys.size){swimVel.set(0,0,0);targetDepth=depth;}
-  }
   const keyboardThrust=(keys.has('fwd')?1:0)-(keys.has('back')?.45:0);
   const thrust=inputAllowed?Math.max(-1,Math.min(1,keyboardThrust+pinchThrust)):0;
   const turn = inputAllowed ? (keys.has('left') ? 1 : 0) - (keys.has('right') ? 1 : 0) : 0;
@@ -3064,11 +3139,17 @@ function frame(){
   {
     const direction=swimDirection(yaw,pitch,thrust,0);
     const wantX=direction.x*1.75,wantY=direction.y*1.75,wantZ=direction.z*1.75;
-    const k = Math.min(1, dt*(thrust !== 0 ? 3 : 0.45));
+    const mobileThrust=inputAllowed && pinchThrust!==0;
+    const k = mobileThrust ? 1-Math.exp(-3*dt) : Math.min(1, dt*(thrust !== 0 ? 3 : 0.45));
+    // Exact constant-target acceleration integral for mobile holds. Keyboard
+    // retains its existing fin/glide feel; event frequency cannot scale speed.
+    const stepX=mobileThrust ? wantX*dt+(swimVel.x-wantX)*k/3 : null;
+    const stepY=mobileThrust ? wantY*dt+(swimVel.y-wantY)*k/3 : null;
+    const stepZ=mobileThrust ? wantZ*dt+(swimVel.z-wantZ)*k/3 : null;
     swimVel.x += (wantX - swimVel.x)*k; swimVel.y += (wantY - swimVel.y)*k; swimVel.z += (wantZ - swimVel.z)*k;
-    posX += swimVel.x*dt; posZ += swimVel.z*dt;
+    posX += mobileThrust ? stepX : swimVel.x*dt; posZ += mobileThrust ? stepZ : swimVel.z*dt;
     if(Math.abs(swimVel.y) > 0.01){
-      depth = Math.max(MIN_DEPTH, Math.min(MAX_DEPTH, depth - swimVel.y*dt));
+      depth = Math.max(MIN_DEPTH, Math.min(MAX_DEPTH, depth - (mobileThrust ? stepY : swimVel.y*dt)));
       if(!vDir) targetDepth = depth;
       if(depth <= MIN_DEPTH || depth >= MAX_DEPTH) swimVel.y = 0;
     }
