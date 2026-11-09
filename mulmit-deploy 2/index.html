@@ -1,0 +1,2869 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>물밑 · 함께 잠기는 바다</title>
+<meta name="theme-color" content="#03202b">
+<meta name="description" content="숨소리만 남는 곳, 함께 잠기는 바다. 전 세계 다이버와 같은 바닷속에 잠겨 보세요.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="물밑">
+<meta property="og:title" content="물밑 · 함께 잠기는 바다">
+<meta property="og:description" content="숨소리만 남는 곳, 함께 잠기는 바다.">
+<meta property="og:url" content="https://mulmit.vercel.app/">
+<meta property="og:image" content="https://mulmit.vercel.app/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="물밑 · 함께 잠기는 바다">
+<meta name="twitter:description" content="숨소리만 남는 곳, 함께 잠기는 바다.">
+<meta name="twitter:image" content="https://mulmit.vercel.app/og.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🫧</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Color+Emoji&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#dcf1f2;
+  --ink-dim:#93bcc1;
+  --glow:#a6f4e4;
+  --deep:#03202b;
+  --veil:rgba(3,32,43,.42);
+  --line:rgba(166,244,228,.45);
+  --chip:rgba(3,32,43,.6);
+  color-scheme: dark;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#dcf1f2; --ink-dim:#93bcc1; --glow:#a6f4e4; --deep:#03202b; --veil:rgba(3,32,43,.42); --line:rgba(166,244,228,.45); --chip:rgba(3,32,43,.6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#dcf1f2; --ink-dim:#93bcc1; --glow:#a6f4e4; --deep:#03202b; --veil:rgba(3,32,43,.42); --line:rgba(166,244,228,.45); --chip:rgba(3,32,43,.6);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{height:100%;margin:0;overflow:hidden;background:var(--deep);color:var(--ink);
+  font-family:"Gowun Batang","Nanum Myeongjo","AppleMyungjo","Batang",serif;
+  -webkit-font-smoothing:antialiased}
+canvas#sea{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+canvas#sea:active{cursor:grabbing}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+button:focus-visible{outline:2px solid var(--glow);outline-offset:4px;border-radius:999px}
+.flag{font-family:"Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif;line-height:1}
+
+/* gate */
+.gate{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;background:var(--veil);transition:opacity 2.4s ease, visibility 0s linear 2.4s;z-index:5;
+  padding:calc(env(safe-area-inset-top,0px) + 24px) 24px calc(env(safe-area-inset-bottom,0px) + 24px)}
+.gate.gone{opacity:0;visibility:hidden}
+.gate h1{margin:0;font-weight:400;font-size:clamp(72px,16vw,148px);letter-spacing:.14em;line-height:1;
+  padding-left:.14em;text-shadow:0 0 40px rgba(166,244,228,.25)}
+.gate .line{margin:28px 0 30px;font-size:clamp(16px,2.2vw,19px);color:var(--ink);line-height:1.8}
+.gate .enter{border:1px solid var(--line);border-radius:999px;padding:13px 34px;font-size:16px;letter-spacing:.08em;
+  transition:background .4s ease}
+.gate .enter:hover{background:rgba(166,244,228,.1)}
+.gate .note{margin-top:22px;font-size:13px;color:#bcdde2}
+
+/* diver tags */
+.tags{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:2}
+.tag{position:absolute;left:0;top:0;display:flex;align-items:center;gap:7px;padding:5px 11px 5px 9px;border-radius:999px;
+  background:var(--chip);border:1px solid var(--line);font-size:13px;white-space:nowrap;color:var(--ink);
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);will-change:transform}
+.tag .flag{font-size:17px}
+.tag .dd{color:var(--ink-dim);font-variant-numeric:tabular-nums}
+.tag .arrow{display:none;width:0;height:0;border-left:7px solid var(--glow);border-top:5px solid transparent;border-bottom:5px solid transparent}
+.tag.edge .arrow{display:inline-block}
+.tag.edge{background:rgba(3,32,43,.72)}
+
+/* hud */
+.hud{text-shadow:0 1px 14px rgba(3,32,43,.75),0 0 2px rgba(3,32,43,.5);position:fixed;inset:0;display:flex;flex-direction:column;pointer-events:none;opacity:0;transition:opacity 3s ease 1.2s;z-index:3;
+  padding:calc(env(safe-area-inset-top,0px) + 18px) 22px calc(env(safe-area-inset-bottom,0px) + 20px)}
+.hud.on{opacity:1}
+.hud button{pointer-events:auto}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:16px}
+.mark{font-size:20px;letter-spacing:.14em}
+.toggles{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:18px;font-size:13px;color:var(--ink)}
+.toggles button{padding:4px 2px}
+.mid{flex:1;position:relative;display:flex;align-items:center;justify-content:flex-end}
+.depthctl{display:flex;flex-direction:column;gap:10px}
+.depthctl button{border:1px solid var(--line);border-radius:999px;padding:10px 16px;font-size:13px;color:var(--ink);
+  background:rgba(3,32,43,.25);user-select:none;-webkit-user-select:none;touch-action:none}
+.depthctl button:active{background:rgba(166,244,228,.14)}
+.breath{position:absolute;left:50%;bottom:6%;transform:translateX(-50%);font-size:15px;letter-spacing:.3em;
+  color:var(--ink);opacity:0;transition:opacity 1.2s ease;white-space:nowrap;padding-left:.3em}
+.hint{position:absolute;left:50%;top:14%;transform:translateX(-50%);font-size:14px;color:var(--ink);
+  text-align:center;opacity:0;transition:opacity 1.6s ease;max-width:90%}
+.hint.on{opacity:.9}
+.bottom{display:flex;justify-content:space-between;align-items:flex-end;gap:16px}
+.depth{font-size:46px;line-height:1;font-variant-numeric:tabular-nums}
+.depth .unit{font-size:18px;margin-left:6px;color:var(--ink-dim)}
+.time,.me{margin-top:8px;font-size:13px;color:var(--ink-dim);font-variant-numeric:tabular-nums}
+.habitat{margin-top:12px;font-size:12px;line-height:1.8;color:var(--ink-dim);max-width:min(64vw,360px)}
+.habitat button{display:block;padding:3px 0;color:var(--ink-dim);font-size:12px;text-align:left}
+.me{display:flex;align-items:center;gap:6px;margin-top:6px}
+.me .flag{font-size:15px}
+.together{font-size:14px;color:var(--ink);text-align:right;display:flex;align-items:center;gap:10px}
+.together .dot{width:8px;height:8px;border-radius:50%;background:var(--glow);box-shadow:0 0 12px var(--glow)}
+.gate .live{margin:0 0 20px;font-size:14px;letter-spacing:.04em;color:var(--glow)}
+.gate .stats{margin-top:10px}
+.tag.near{border-color:var(--glow);background:rgba(166,244,228,.16)}
+.toast{position:fixed;top:calc(env(safe-area-inset-top,0px) + 14px);left:50%;transform:translateX(-50%) translateY(-10px);
+  background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:8px 18px;font-size:13px;color:var(--ink);
+  opacity:0;transition:opacity .5s ease,transform .5s ease;pointer-events:none;z-index:6;white-space:nowrap}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (max-width:520px){
+  .depth{font-size:36px}
+  .together{font-size:13px;max-width:52vw}
+  .toggles{gap:12px}
+}
+@media (prefers-reduced-motion: reduce){
+  .gate,.hud,.breath,.hint{transition-duration:.01s}
+}
+.invite{width:min(600px,calc(100vw - 32px));max-height:90dvh;overflow:auto;padding:24px;border:1px solid var(--line);border-radius:20px;background:#062631;color:var(--ink)}
+.invite::backdrop{background:rgba(0,12,18,.78)}
+.invite h2{font-size:24px;font-weight:400;margin:0 0 8px}.invite p{font-size:13px;line-height:1.8;color:var(--ink-dim)}
+.invite .invite-close{float:right;padding:6px 10px}.invite img{display:block;width:100%;height:auto;max-height:38dvh;object-fit:contain;border-radius:10px;margin:18px 0}
+.invite label{display:block;font-size:13px;margin:12px 0 8px}.invite input{width:100%;padding:12px;color:var(--ink);background:#03202b;border:1px solid var(--line);border-radius:8px;font:14px monospace}
+.invite-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.invite-actions button{padding:11px 16px;border:1px solid var(--line);border-radius:999px;font-size:14px}.invite-actions button:first-child{background:#a6f4e4;color:#03202b}.invite button:disabled{opacity:.45;cursor:wait}
+.invite .invite-status{min-height:24px;color:var(--glow);margin-bottom:0}
+@media(max-width:520px){.invite{padding:18px}.toggles{gap:6px 12px;max-width:78%}.toast{white-space:normal;max-width:90vw;text-align:center}}
+@media(pointer:coarse),(max-width:900px){
+ .depthctl{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:calc(env(safe-area-inset-bottom,0px) + 142px);gap:12px}.depthctl button{min-height:48px;min-width:84px;background:rgba(3,32,43,.68)}
+ .breath{bottom:2%;font-size:13px}.hint{top:8%;width:88%;font-size:12px;line-height:1.9}.hud{padding-left:16px;padding-right:16px}
+}
+@media(max-height:520px) and (orientation:landscape){.depthctl{bottom:calc(env(safe-area-inset-bottom,0px) + 80px)}.depth{font-size:28px}.time,.me{font-size:11px}.hint{top:0%;max-width:46%}}
+</style>
+</head>
+<body>
+<canvas id="sea" aria-label="바닷속 3D 공간. 끌어서 주위를 둘러볼 수 있어요."></canvas>
+<div class="tags" id="tags" aria-hidden="true"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="hud" id="hud">
+  <div class="top">
+    <span class="mark">물밑</span>
+    <div class="toggles">
+      <button id="soundBtn" type="button">소리 끄기</button>
+      <button id="guideBtn" type="button">호흡 안내 끄기</button>
+      <button id="shotBtn" type="button">이 장소로 초대하기</button>
+    </div>
+  </div>
+  <div class="mid">
+    <div class="hint" id="hint">방향키로 헤엄치고, Q·E로 깊이를 조절해요<br>G는 인사, 마우스를 끌면 고개를 돌릴 수 있어요</div>
+    <div class="breath" id="breath" aria-hidden="true"></div>
+    <div class="depthctl">
+      <button id="upBtn" type="button" aria-label="위로 올라가기">올라가기</button>
+      <button id="downBtn" type="button" aria-label="더 깊이 내려가기">내려가기</button>
+      <button id="waveBtn" type="button">인사하기</button>
+    </div>
+  </div>
+  <div class="bottom">
+    <div class="computer" aria-live="off">
+      <div class="depth"><span id="dval">0.0</span><span class="unit">m</span></div>
+      <div class="time">다이브 타임 <span id="tval">00:00</span></div>
+      <div class="me">내 수트 표시 <span class="flag" id="meFlag"></span><span id="meCC"></span></div>
+      <div class="habitat"><span id="habitatName">화산섬의 물밑</span><button id="routeBtn" type="button" aria-pressed="false">물길 힌트 켜기</button><span id="routeHint" hidden></span></div>
+    </div>
+    <div class="together"><span class="dot" aria-hidden="true"></span><span id="together">지금은 혼자 잠겨 있어요</span></div>
+  </div>
+</div>
+
+<div class="gate" id="gate">
+  <h1>물밑</h1>
+  <p class="line">숨소리만 남는 곳,<br>함께 잠기는 바다.</p>
+  <p class="live" id="gateLive">바닷속 다이버를 확인하는 중이에요</p>
+  <button class="enter" id="enterBtn" type="button">입수하기</button>
+  <p class="note">소리를 켜고 들어오면 더 좋아요</p>
+  <p class="note stats" id="gateStats"></p>
+</div>
+
+<dialog class="invite" id="inviteDialog" aria-labelledby="inviteTitle">
+  <button class="invite-close" id="inviteClose" type="button" aria-label="초대 창 닫기">닫기</button>
+  <h2 id="inviteTitle">이 장소로 초대하기</h2>
+  <p>지금의 수심과 좌표, 바라보던 방향을 담았어요.<br>초대 링크를 열고 입수하면 이 자리에서 시작해요.</p>
+  <img id="invitePreview" alt="수심과 좌표가 새겨진 물밑 초대 이미지">
+  <label for="inviteLink">이 장소로 오는 초대 링크</label>
+  <input id="inviteLink" readonly spellcheck="false" aria-describedby="inviteStatus">
+  <div class="invite-actions">
+    <button id="inviteShare" type="button">초대 공유하기</button>
+    <button id="inviteCopy" type="button">링크 복사</button>
+    <button id="inviteSave" type="button">이미지 저장</button>
+  </div>
+  <p class="invite-status" id="inviteStatus" role="status" aria-live="polite"></p>
+</dialog>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+(function(){
+"use strict";
+const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = id => document.getElementById(id);
+
+/* ---------- country (from device time zone / locale) ---------- */
+const TZ = {
+  'Asia/Seoul':'KR','Asia/Tokyo':'JP','Asia/Taipei':'TW','Asia/Hong_Kong':'HK','Asia/Macau':'MO','Asia/Shanghai':'CN',
+  'Asia/Chongqing':'CN','Asia/Harbin':'CN','Asia/Urumqi':'CN','Asia/Singapore':'SG','Asia/Kuala_Lumpur':'MY','Asia/Kuching':'MY',
+  'Asia/Bangkok':'TH','Asia/Ho_Chi_Minh':'VN','Asia/Saigon':'VN','Asia/Manila':'PH','Asia/Jakarta':'ID','Asia/Makassar':'ID',
+  'Asia/Jayapura':'ID','Asia/Kolkata':'IN','Asia/Calcutta':'IN','Asia/Dubai':'AE','Asia/Riyadh':'SA','Asia/Qatar':'QA',
+  'Asia/Jerusalem':'IL','Asia/Kathmandu':'NP','Asia/Colombo':'LK','Asia/Karachi':'PK','Asia/Dhaka':'BD','Asia/Yangon':'MM',
+  'Asia/Phnom_Penh':'KH','Asia/Vientiane':'LA','Asia/Ulaanbaatar':'MN','Asia/Brunei':'BN','Indian/Maldives':'MV',
+  'Pacific/Auckland':'NZ','Pacific/Honolulu':'US','Pacific/Guam':'GU','Pacific/Saipan':'MP','Pacific/Palau':'PW','Pacific/Fiji':'FJ',
+  'Europe/London':'GB','Europe/Dublin':'IE','Europe/Paris':'FR','Europe/Berlin':'DE','Europe/Madrid':'ES','Europe/Rome':'IT',
+  'Europe/Amsterdam':'NL','Europe/Brussels':'BE','Europe/Zurich':'CH','Europe/Vienna':'AT','Europe/Stockholm':'SE','Europe/Oslo':'NO',
+  'Europe/Copenhagen':'DK','Europe/Helsinki':'FI','Europe/Lisbon':'PT','Europe/Warsaw':'PL','Europe/Prague':'CZ','Europe/Budapest':'HU',
+  'Europe/Athens':'GR','Europe/Istanbul':'TR','Europe/Moscow':'RU','Europe/Kiev':'UA','Europe/Kyiv':'UA','Europe/Bucharest':'RO',
+  'America/Toronto':'CA','America/Vancouver':'CA','America/Edmonton':'CA','America/Winnipeg':'CA','America/Halifax':'CA','America/Montreal':'CA',
+  'America/Mexico_City':'MX','America/Cancun':'MX','America/Sao_Paulo':'BR','America/Argentina/Buenos_Aires':'AR','America/Buenos_Aires':'AR',
+  'America/Santiago':'CL','America/Lima':'PE','America/Bogota':'CO','America/Caracas':'VE','America/Panama':'PA','America/Costa_Rica':'CR',
+  'Africa/Cairo':'EG','Africa/Johannesburg':'ZA','Africa/Nairobi':'KE','Africa/Lagos':'NG','Africa/Casablanca':'MA'
+};
+function detectCC(){
+  let tz = '';
+  try{ tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; }catch(e){}
+  if(TZ[tz]) return TZ[tz];
+  if(/^Australia\//.test(tz)) return 'AU';
+  if(/^America\/(New_York|Chicago|Denver|Los_Angeles|Phoenix|Anchorage|Detroit|Boise|Indiana|Kentucky|North_Dakota|Juneau|Adak)/.test(tz)) return 'US';
+  const langs = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || ''];
+  for(const l of langs){ const m = /[-_]([A-Za-z]{2})$/.exec(l); if(m) return m[1].toUpperCase(); }
+  return '';
+}
+let myCC = detectCC();
+function flagEmoji(cc){
+  return /^[A-Z]{2}$/.test(cc) ? String.fromCodePoint(...[...cc].map(c => 0x1F1E6 + c.charCodeAt(0) - 65)) : '🌊';
+}
+$('meFlag').textContent = flagEmoji(myCC);
+$('meCC').textContent = myCC || '알 수 없음';
+/* country from IP (Vercel edge header via /api/country); time zone guess stays as fallback */
+fetch('/api/country', {cache:'no-store'}).then(r => r.ok ? r.json() : null).then(j => {
+  if(j && typeof j.cc === 'string' && /^[A-Z]{2}$/.test(j.cc)){
+    myCC = j.cc;
+    $('meFlag').textContent = flagEmoji(myCC);
+    $('meCC').textContent = myCC;
+    if(typeof retrackSelf === 'function') retrackSelf();
+  }
+}).catch(()=>{});
+
+/* ---------- renderer / scene ---------- */
+const canvas = $('sea');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+renderer.setSize(innerWidth, innerHeight, false);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(new THREE.Color('#2b8fa3'), 0.022);
+scene.background = scene.fog.color;
+
+const camera = new THREE.PerspectiveCamera(62, innerWidth/innerHeight, 0.1, 320);
+const FLOOR_Y = -42, MAX_DEPTH = 39, MIN_DEPTH = 0.8;
+
+const hemi = new THREE.HemisphereLight(0x9fe0e8, 0x02121a, 0.9);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xdff8ff, 0.8);
+sun.position.set(10, 50, 6);
+scene.add(sun);
+
+/* underwater environment light for reflective skin (silver fish, mask glass, tanks) */
+const envCube = (function(){
+  const S = 128;
+  const face = kind => {
+    const c = document.createElement('canvas'); c.width = c.height = S;
+    const g = c.getContext('2d');
+    if(kind === 'top'){
+      const gr = g.createRadialGradient(S/2,S/2,0,S/2,S/2,S*0.75);
+      gr.addColorStop(0,'#ffffff'); gr.addColorStop(0.25,'#d6f6fb'); gr.addColorStop(1,'#5fb4c4');
+      g.fillStyle = gr;
+    } else if(kind === 'bottom'){
+      g.fillStyle = '#04141a';
+    } else {
+      const gr = g.createLinearGradient(0,0,0,S);
+      gr.addColorStop(0,'#7cc8d4'); gr.addColorStop(0.45,'#1f6c7d'); gr.addColorStop(1,'#04161c');
+      g.fillStyle = gr;
+    }
+    g.fillRect(0,0,S,S);
+    return c;
+  };
+  const tex = new THREE.CubeTexture([face('side'),face('side'),face('top'),face('bottom'),face('side'),face('side')]);
+  tex.needsUpdate = true;
+  return tex;
+})();
+const envMats = [];
+function envMat(mat, base){ mat.envMap = envCube; mat.userData.envBase = base; mat.envMapIntensity = base; envMats.push(mat); return mat; }
+
+const C_SHALLOW = new THREE.Color('#377f80'), C_MID = new THREE.Color('#15575e'), C_DEEP = new THREE.Color('#062c3b');
+function waterColor(d, out){
+  if(d < 15) out.copy(C_SHALLOW).lerp(C_MID, d/15);
+  else out.copy(C_MID).lerp(C_DEEP, Math.min(1, (d-15)/25));
+}
+
+const timeU = { value: 0 };
+let pxScale = 1;
+function updatePxScale(){
+  pxScale = renderer.getDrawingBufferSize(new THREE.Vector2()).y / (2*Math.tan(THREE.MathUtils.degToRad(camera.fov/2)));
+}
+updatePxScale();
+
+const CAUSTIC_GLSL = `
+float causticF(vec2 uv, float time){
+  vec2 p = mod(uv*6.28318, 6.28318) - 250.0;
+  vec2 i = p; float c = 1.0; float inten = 0.005;
+  for(int n=0;n<4;n++){
+    float t = time*(1.0 - (3.5/float(n+1)));
+    i = p + vec2(cos(t - i.x) + sin(t + i.y), sin(t - i.y) + cos(t + i.x));
+    c += 1.0/length(vec2(p.x/(sin(i.x+t)/inten), p.y/(cos(i.y+t)/inten)));
+  }
+  c /= 4.0; c = 1.17 - pow(c, 1.4);
+  return pow(abs(c), 8.0);
+}`;
+const HASH_GLSL = `float hsh(vec2 p){ return fract(sin(dot(p, vec2(12.9898,78.233)))*43758.5453); }`;
+
+/* ---------- geometry helpers ---------- */
+function curve(pts){
+  return s => {
+    const n = pts.length;
+    if(s <= pts[0][0]) return pts[0][1];
+    if(s >= pts[n-1][0]) return pts[n-1][1];
+    let i = 0; while(s > pts[i+1][0]) i++;
+    const p0 = pts[Math.max(0,i-1)][1], p1 = pts[i][1], p2 = pts[i+1][1], p3 = pts[Math.min(n-1,i+2)][1];
+    const t = (s - pts[i][0])/(pts[i+1][0] - pts[i][0]), t2 = t*t, t3 = t2*t;
+    return Math.max(0, 0.5*((2*p1) + (-p0+p2)*t + (2*p0-5*p1+4*p2-p3)*t2 + (-p0+3*p1-3*p2+p3)*t3));
+  };
+}
+function tubeGeo(n, m, zF, zB, xy, bias){
+  const pos = [], idx = [];
+  for(let i=0;i<=n;i++){
+    const s = Math.pow(i/n, bias || 1);
+    const z = zF - (zF - zB)*s;
+    for(let j=0;j<=m;j++){
+      const th = j/m*Math.PI*2;
+      const q = xy(s, th);
+      pos.push(q[0], q[1], z);
+    }
+  }
+  for(let i=0;i<n;i++) for(let j=0;j<m;j++){
+    const a = i*(m+1)+j, b = (i+1)*(m+1)+j, c = b+1, d = a+1;
+    idx.push(a,b,d, b,c,d);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  return g;
+}
+function triGeo(tris){
+  const arr = [];
+  tris.forEach(t => t.forEach(v => arr.push(v[0], v[1], v[2])));
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3));
+  g.computeVertexNormals();
+  return g;
+}
+function fanGeo(c, poly){
+  const tris = [];
+  for(let i=0;i<poly.length-1;i++) tris.push([c, poly[i], poly[i+1]]);
+  return triGeo(tris);
+}
+function mirrorX(v){ return [-v[0], v[1], v[2]]; }
+function mergeGeos(list){
+  const P = [], N = [], A = [];
+  for(const it of list){
+    const g = it.geo.index ? it.geo.toNonIndexed() : it.geo;
+    if(!g.attributes.normal) g.computeVertexNormals();
+    const p = g.attributes.position.array, nn = g.attributes.normal.array;
+    for(let i=0;i<p.length;i++){ P.push(p[i]); N.push(nn[i]); }
+    for(let i=0;i<p.length/3;i++) A.push(it.part);
+  }
+  const out = new THREE.BufferGeometry();
+  out.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
+  out.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
+  out.setAttribute('aPart', new THREE.Float32BufferAttribute(A, 1));
+  return out;
+}
+
+/* ---------- glow texture ---------- */
+function makeGlow(){
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const g = c.getContext('2d');
+  const gr = g.createRadialGradient(64,64,0,64,64,64);
+  gr.addColorStop(0,'rgba(255,255,255,1)');
+  gr.addColorStop(0.18,'rgba(255,255,255,.65)');
+  gr.addColorStop(0.5,'rgba(255,255,255,.12)');
+  gr.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.fillRect(0,0,128,128);
+  return new THREE.CanvasTexture(c);
+}
+const glowTex = makeGlow();
+
+/* ---------- sea floor with caustics ---------- */
+(function floor(){
+  const geo = new THREE.PlaneGeometry(420, 420, 140, 140);
+  geo.rotateX(-Math.PI/2);
+  const pos = geo.attributes.position;
+  for(let i=0;i<pos.count;i++){
+    const x = pos.getX(i), z = pos.getZ(i);
+    pos.setY(i, floorH(x,z)-FLOOR_Y);
+  }
+  geo.computeVertexNormals();
+  const mat = new THREE.MeshLambertMaterial({color:0x6a7770});
+  mat.onBeforeCompile = sh => {
+    sh.uniforms.uTime = timeU;
+    sh.vertexShader = 'varying vec3 vWPos;\n' + sh.vertexShader.replace('#include <begin_vertex>',
+      '#include <begin_vertex>\n vWPos = (modelMatrix * vec4(transformed,1.0)).xyz;');
+    sh.fragmentShader = 'uniform float uTime;\nvarying vec3 vWPos;\n' + CAUSTIC_GLSL + '\n' +
+      sh.fragmentShader.replace('#include <fog_fragment>',
+      'gl_FragColor.rgb += vec3(0.55,0.85,0.9) * causticF(vWPos.xz*0.05, uTime*0.45) * 0.55;\n#include <fog_fragment>');
+  };
+  mat.customProgramCacheKey = () => 'mulmit-floor-caustics-v1';
+  const m = new THREE.Mesh(geo, mat);
+  m.position.y = FLOOR_Y;
+  scene.add(m);
+
+})();
+
+/* ---------- reef: procedural corals & rocks (all code-built, zero assets) ---------- */
+const reefHomes = []; // Actual anemone placements, shared with resident reef fish.
+function lcg(seed){
+  let s = Math.floor(seed*233280) % 233280;
+  return () => { s = (s*9301 + 49297) % 233280; return s/233280; };
+}
+function branchCoral(seed){
+  const rnd = lcg(seed);
+  const parts = [];
+  const seg = (a, b, r0, r1) => {
+    const A = new THREE.Vector3(a[0],a[1],a[2]), B = new THREE.Vector3(b[0],b[1],b[2]);
+    const len = A.distanceTo(B);
+    if(len < 0.01) return;
+    const g = new THREE.CylinderGeometry(r1, r0, len, 7, 1);
+    const m = new THREE.Mesh(g);
+    m.position.copy(A).add(B).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), B.sub(A).normalize());
+    m.updateMatrix();
+    parts.push({geo: g.clone().applyMatrix4(m.matrix), part: 0});
+  };
+  const grow = (p, dir, len, r, d) => {
+    const q = [p[0]+dir[0]*len, p[1]+dir[1]*len, p[2]+dir[2]*len];
+    seg(p, q, r, r*0.72);
+    if(d >= 4) return;
+    const k = 2 + (rnd() < 0.45 ? 1 : 0);
+    for(let i=0;i<k;i++){
+      const az = rnd()*6.283, spread = 0.45 + rnd()*0.4;
+      let nx = dir[0]*0.75 + Math.cos(az)*spread, ny = dir[1]*0.55 + 0.5, nz = dir[2]*0.75 + Math.sin(az)*spread;
+      const nl = Math.hypot(nx, ny, nz);
+      grow(q, [nx/nl, ny/nl, nz/nl], len*0.72, r*0.72, d+1);
+    }
+  };
+  grow([0,0,0], [0,1,0], 0.55, 0.08, 0);
+  return mergeGeos(parts);
+}
+function fanCoral(seed){
+  const rnd = lcg(seed);
+  const R = 0.85 + rnd()*0.35;
+  const pts = [];
+  for(let i=0;i<=26;i++){
+    const a = Math.PI*i/26;
+    const w = 1 + 0.12*Math.sin(a*5 + seed*7) + 0.06*Math.sin(a*9 + seed*3);
+    pts.push([Math.cos(a)*R*w, Math.sin(a)*R*w*0.92 + 0.1, 0]);
+  }
+  const blade = fanGeo([0,0,0], pts);
+  const p = blade.attributes.position;
+  for(let i=0;i<p.count;i++){
+    const x = p.getX(i), y = p.getY(i);
+    p.setZ(i, Math.sin(x*3.4 + seed)*0.07*Math.min(1, y));
+  }
+  blade.computeVertexNormals();
+  const stalk = new THREE.CylinderGeometry(0.018, 0.034, 0.55, 6, 1);
+  stalk.translate(0, 0.27, 0);
+  return mergeGeos([{geo:blade, part:0}, {geo:stalk, part:0}]);
+}
+function brainCoral(seed){
+  const rnd = lcg(seed);
+  const g = new THREE.SphereGeometry(1, 28, 18, 0, Math.PI*2, 0, Math.PI/2);
+  const p = g.attributes.position;
+  const s1 = rnd()*6, s2 = rnd()*6;
+  for(let i=0;i<p.count;i++){
+    const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+    const b = 0.1*Math.sin(x*9 + s1)*Math.sin(z*8 + s2) + 0.05*Math.sin(x*17 + z*15 + s1);
+    p.setXYZ(i, x*(1 + b*0.55), Math.max(0.02, y*(1 + b) + 0.02), z*(1 + b*0.55));
+  }
+  g.scale(0.62, 0.52, 0.62);
+  g.computeVertexNormals();
+  return mergeGeos([{geo:g, part:0}]);
+}
+function tubeSponge(seed){
+  const rnd = lcg(seed);
+  const parts = [];
+  const n = 3 + Math.floor(rnd()*3);
+  for(let i=0;i<n;i++){
+    const r = 0.09 + rnd()*0.06, h = 0.5 + rnd()*0.75, a = rnd()*6.283, d = rnd()*0.22;
+    const g = new THREE.CylinderGeometry(r*0.9, r, h, 10, 1);
+    g.translate(Math.cos(a)*d, h/2, Math.sin(a)*d);
+    parts.push({geo:g, part:0});
+  }
+  const base = new THREE.SphereGeometry(0.26, 12, 8, 0, Math.PI*2, 0, 1.2);
+  base.scale(1, 0.35, 1); base.translate(0, 0.02, 0);
+  parts.push({geo:base, part:0});
+  return mergeGeos(parts);
+}
+function anemoneCoral(seed){
+  const rnd = lcg(seed);
+  const parts = [];
+  const base = new THREE.SphereGeometry(0.22, 14, 10, 0, Math.PI*2, 0, 1.35);
+  base.scale(1, 0.42, 1); base.translate(0, 0.03, 0);
+  parts.push({geo:base, part:0});
+  for(let i=0;i<26;i++){
+    const a = i/26*Math.PI*2 + rnd()*0.3;
+    const tilt = 0.5 + rnd()*0.7;
+    const len = 0.26 + rnd()*0.22;
+    const g = new THREE.CylinderGeometry(0.012, 0.02, len, 5, 1);
+    const m = new THREE.Mesh(g);
+    m.position.set(Math.cos(a)*0.1, Math.sin(tilt)*len*0.5 + 0.08, Math.sin(a)*0.1);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),
+      new THREE.Vector3(Math.cos(a)*Math.sin(tilt), Math.cos(tilt), Math.sin(a)*Math.sin(tilt)));
+    m.updateMatrix();
+    parts.push({geo:g.clone().applyMatrix4(m.matrix), part:1});
+  }
+  return mergeGeos(parts);
+}
+(function reef(){
+  return; // Galapagos uses the anchored volcanic habitat builder below, not a coral garden.
+  const coralMat = envMat(new THREE.MeshStandardMaterial({color:0xffffff, roughness:0.82, metalness:0, side:THREE.DoubleSide}), 0.25);
+  const anemMat = coralMat.clone();
+  envMats.push(anemMat);
+  anemMat.onBeforeCompile = sh => {
+    sh.uniforms.uTime = timeU;
+    sh.vertexShader = 'uniform float uTime;\nattribute float aPart;\n' + sh.vertexShader.replace('#include <begin_vertex>',
+      `#include <begin_vertex>
+      if(aPart > 0.5){
+        transformed.x += sin(uTime*1.3 + position.x*14.0 + position.z*11.0)*0.03*position.y;
+        transformed.z += cos(uTime*1.1 + position.x*9.0 + position.z*7.0)*0.03*position.y;
+      }`);
+  };
+  anemMat.customProgramCacheKey = () => 'mulmit-anemone';
+  const geos = {stag:branchCoral(0.31), fan:fanCoral(1.7), brain:brainCoral(2.3), sponge:tubeSponge(3.1), anem:anemoneCoral(4.7)};
+  const mats = {stag:coralMat, fan:coralMat, brain:coralMat, sponge:coralMat, anem:anemMat};
+  const sizes = {stag:[0.8,1.7], fan:[0.9,1.5], brain:[0.8,1.5], sponge:[0.9,1.5], anem:[0.8,1.3]};
+  const cols = {
+    stag:[0xd98b6a, 0xc77ba8, 0xa4c46a, 0xe0b464],
+    fan:[0xb06a9e, 0xc96a6a, 0x7a7ab8],
+    brain:[0xb59a5a, 0x9aa06a, 0xc9a06a],
+    sponge:[0x8e6aa8, 0xd9c06a],
+    anem:[0x8fae6a, 0xd98b7a, 0x6aa8b0]
+  };
+  const spots = [];
+  [[12,-6],[-14,7],[4,14],[-6,-16],[18,9]].forEach(c => {
+    const j = () => (Math.random()-.5)*7;
+    for(let k=0;k<4;k++) spots.push({t:'stag', x:c[0]+j(), z:c[1]+j()});
+    for(let k=0;k<2;k++) spots.push({t:'brain', x:c[0]+j(), z:c[1]+j()});
+    for(let k=0;k<2;k++) spots.push({t:'fan', x:c[0]+j(), z:c[1]+j()});
+    spots.push({t:'sponge', x:c[0]+j(), z:c[1]+j()});
+    spots.push({t:'anem', x:c[0]+j(), z:c[1]+j()});
+  });
+  const scatter = (t, n, r0, r1) => {
+    for(let k=0;k<n;k++){
+      const a = Math.random()*6.283, d = r0 + Math.random()*(r1-r0);
+      spots.push({t, x:Math.cos(a)*d, z:Math.sin(a)*d});
+    }
+  };
+  scatter('stag', 10, 10, 58); scatter('brain', 5, 12, 55); scatter('fan', 3, 14, 50);
+  scatter('sponge', 4, 12, 55); scatter('anem', 3, 10, 45);
+  const byType = {};
+  spots.forEach(s => (byType[s.t] = byType[s.t] || []).push(s));
+  const M = new THREE.Matrix4(), Q = new THREE.Quaternion(), E = new THREE.Euler(), V = new THREE.Vector3(), S = new THREE.Vector3(), C = new THREE.Color();
+  for(const t in byType){
+    const list = byType[t];
+    const mesh = new THREE.InstancedMesh(geos[t], mats[t], list.length);
+    mesh.frustumCulled = false;
+    list.forEach((s, i) => {
+      const sc = sizes[t][0] + Math.random()*(sizes[t][1]-sizes[t][0]);
+      if(t === 'anem') reefHomes.push({x:s.x, z:s.z, scale:sc});
+      V.set(s.x, gridH(s.x, s.z) - 0.07*sc, s.z);
+      E.set((Math.random()-.5)*0.12, Math.random()*6.283, (Math.random()-.5)*0.12);
+      Q.setFromEuler(E);
+      S.setScalar(sc);
+      M.compose(V, Q, S);
+      mesh.setMatrixAt(i, M);
+      C.setHex(cols[t][Math.floor(Math.random()*cols[t].length)]).offsetHSL(0, 0, (Math.random()-.5)*0.07);
+      mesh.setColorAt(i, C);
+    });
+    mesh.instanceMatrix.needsUpdate = true;
+    if(mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+    scene.add(mesh);
+  }
+  /* rocks — y now follows the sandy floor's undulation so nothing floats anymore */
+  const rockMat = envMat(new THREE.MeshStandardMaterial({color:0x39463f, roughness:0.95, metalness:0}), 0.2);
+  for(let k=0;k<14;k++){
+    const g = new THREE.IcosahedronGeometry(1, 1);
+    const p = g.attributes.position;
+    for(let i=0;i<p.count;i++){
+      const f = 0.72 + Math.random()*0.42;
+      p.setXYZ(i, p.getX(i)*f, p.getY(i)*f*0.68, p.getZ(i)*f);
+    }
+    g.computeVertexNormals();
+    const r = new THREE.Mesh(g, rockMat);
+    const a = Math.random()*6.283, d = 7 + Math.random()*52;
+    const x = Math.cos(a)*d, z = Math.sin(a)*d;
+    const s = 0.7 + Math.random()*2.4;
+    r.scale.setScalar(s);
+    r.position.set(x, gridH(x, z) - 0.3*s, z);
+    r.rotation.set((Math.random()-.5)*0.5, Math.random()*6, (Math.random()-.5)*0.5);
+    scene.add(r);
+  }
+})();
+
+/* ---------- surface seen from below ---------- */
+(function surface(){
+  const geo = new THREE.PlaneGeometry(500, 500, 1, 1);
+  geo.rotateX(Math.PI/2);
+  const mat = new THREE.ShaderMaterial({
+    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime:{value:0} }]),
+    vertexShader: `
+      #include <common>
+      #include <fog_pars_vertex>
+      varying vec3 vWPos;
+      void main(){
+        vec4 wp = modelMatrix * vec4(position,1.0);
+        vWPos = wp.xyz;
+        vec4 mvPosition = viewMatrix * wp;
+        gl_Position = projectionMatrix * mvPosition;
+        #include <fog_vertex>
+      }`,
+    fragmentShader: `
+      #include <common>
+      #include <fog_pars_fragment>
+      uniform float uTime;
+      varying vec3 vWPos;
+      ${CAUSTIC_GLSL}
+      void main(){
+        float c = causticF(vWPos.xz*0.035, uTime*0.6);
+        vec3 col = mix(vec3(0.32,0.72,0.80), vec3(0.88,1.0,1.0), clamp(c*0.9+0.12,0.0,1.0));
+        gl_FragColor = vec4(col, 1.0);
+        #include <fog_fragment>
+      }`,
+    fog:true, side:THREE.DoubleSide
+  });
+  mat.uniforms.uTime = timeU;
+  scene.add(new THREE.Mesh(geo, mat));
+})();
+
+/* ---------- light shafts ---------- */
+const rayMats = [];
+(function rays(){
+  for(let k=0;k<12;k++){
+    const h = 55;
+    const geo = new THREE.CylinderGeometry(1.2+Math.random()*1.2, 3.5+Math.random()*3, h, 20, 1, true);
+    const mat = new THREE.ShaderMaterial({
+      uniforms:{ uTime:timeU, uSeed:{value:Math.random()*10}, uI:{value:0.11} },
+      vertexShader:`
+        varying vec2 vUv; varying vec3 vW; varying vec3 vN;
+        void main(){ vUv = uv; vec4 wp = modelMatrix*vec4(position,1.0); vW = wp.xyz;
+          vN = normalize(mat3(modelMatrix)*normal); gl_Position = projectionMatrix*viewMatrix*wp; }`,
+      fragmentShader:`
+        uniform float uTime; uniform float uSeed; uniform float uI;
+        varying vec2 vUv; varying vec3 vW; varying vec3 vN;
+        void main(){
+          vec3 v = normalize(cameraPosition - vW);
+          float edge = pow(abs(dot(vN, v)), 2.5);
+          float a = edge * pow(vUv.y, 1.6) * uI * (0.55 + 0.45*sin(uTime*0.45 + uSeed));
+          a *= exp(-length(cameraPosition - vW)*0.025);
+          gl_FragColor = vec4(vec3(0.78,0.96,1.0), a);
+        }`,
+      transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide
+    });
+    rayMats.push(mat);
+    const m = new THREE.Mesh(geo, mat);
+    const a = Math.random()*Math.PI*2, d = 4 + Math.random()*34;
+    m.position.set(Math.cos(a)*d, -h/2 + 1, Math.sin(a)*d);
+    m.rotation.set((Math.random()-.5)*0.25, 0, 0.18 + (Math.random()-.5)*0.15);
+    scene.add(m);
+  }
+})();
+
+/* ---------- marine snow ---------- */
+const snowMat = new THREE.ShaderMaterial({
+  uniforms:{ uTime:timeU, uCam:{value:new THREE.Vector3()}, uScale:{value:1} },
+  vertexShader:`
+    uniform float uTime; uniform vec3 uCam; uniform float uScale; attribute float aS;
+    varying float vA;
+    void main(){
+      vec3 p = position + vec3(sin(uTime*0.12 + position.y)*0.6, -uTime*0.12*aS, cos(uTime*0.1 + position.x)*0.6);
+      p = mod(p - uCam + 20.0, 40.0) - 20.0 + uCam;
+      vec4 mv = modelViewMatrix * vec4(p,1.0);
+      gl_PointSize = clamp(0.035*aS * uScale / -mv.z, 1.0, 6.0);
+      vA = exp(-length(mv.xyz)*0.07);
+      gl_Position = projectionMatrix * mv;
+    }`,
+  fragmentShader:`
+    varying float vA;
+    void main(){ float d = length(gl_PointCoord-0.5); if(d>0.5) discard;
+      gl_FragColor = vec4(0.84,0.94,0.95, (1.0-d*2.0)*0.55*vA); }`,
+  transparent:true, depthWrite:false
+});
+(function snow(){
+  const N = 2600, p = new Float32Array(N*3), s = new Float32Array(N);
+  for(let i=0;i<N;i++){ p[i*3]=Math.random()*40-20; p[i*3+1]=Math.random()*40-20; p[i*3+2]=Math.random()*40-20; s[i]=0.5+Math.random(); }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(p,3));
+  g.setAttribute('aS', new THREE.BufferAttribute(s,1));
+  const pts = new THREE.Points(g, snowMat);
+  pts.frustumCulled = false;
+  scene.add(pts);
+})();
+
+/* ---------- bioluminescent plankton (fades in below 22 m) ---------- */
+const bioMat = new THREE.ShaderMaterial({
+  uniforms:{ uTime:timeU, uCam:{value:new THREE.Vector3()}, uScale:{value:1}, uFade:{value:0} },
+  vertexShader:`
+    uniform float uTime; uniform vec3 uCam; uniform float uScale;
+    attribute float aS; attribute float aH;
+    varying float vA; varying float vH;
+    void main(){
+      vec3 p = position + vec3(sin(uTime*0.07 + position.y*1.7)*0.8, sin(uTime*0.05 + position.x)*0.5, cos(uTime*0.06 + position.z*1.3)*0.8);
+      p = mod(p - uCam + 20.0, 40.0) - 20.0 + uCam;
+      vec4 mv = modelViewMatrix * vec4(p, 1.0);
+      gl_PointSize = clamp(0.022*aS*uScale/-mv.z, 0.0, 5.0);
+      float tw = 0.3 + 0.7*(0.5 + 0.5*sin(uTime*1.4 + aS*6.283));
+      vA = tw*exp(-length(mv.xyz)*0.055);
+      vH = aH;
+      gl_Position = projectionMatrix*mv;
+    }`,
+  fragmentShader:`
+    uniform float uFade;
+    varying float vA; varying float vH;
+    void main(){
+      float d = length(gl_PointCoord - 0.5);
+      if(d > 0.5) discard;
+      vec3 col = mix(vec3(0.25,0.95,0.85), vec3(0.35,0.45,1.0), vH);
+      col = mix(col, vec3(0.78,0.4,1.0), step(0.85, vH));
+      gl_FragColor = vec4(col*1.35, (1.0 - d*2.0)*vA*uFade);
+    }`,
+  transparent:true, depthWrite:false, blending:THREE.AdditiveBlending
+});
+(function biolum(){
+  const N = 520, p = new Float32Array(N*3), s = new Float32Array(N), h = new Float32Array(N);
+  for(let i=0;i<N;i++){ p[i*3]=Math.random()*40-20; p[i*3+1]=Math.random()*40-20; p[i*3+2]=Math.random()*40-20; s[i]=0.5+Math.random(); h[i]=Math.random(); }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+  g.setAttribute('aS', new THREE.BufferAttribute(s, 1));
+  g.setAttribute('aH', new THREE.BufferAttribute(h, 1));
+  const pts = new THREE.Points(g, bioMat);
+  pts.frustumCulled = false;
+  scene.add(pts);
+})();
+
+/* ========== SARDINES ========== */
+const sardineGeo = (function(){
+  const H = curve([[0,0],[0.015,0.032],[0.06,0.062],[0.18,0.092],[0.38,0.1],[0.58,0.082],[0.76,0.045],[0.88,0.026],[0.95,0.02],[1,0]]);
+  const body = tubeGeo(26, 14, 0.5, -0.42, (s, th) => {
+    const h = H(s), c = Math.cos(th), sn = Math.sin(th);
+    return [c*h*0.4, sn*h*(sn < 0 ? 0.93 : 1)];
+  }, 1.15);
+  const tail = fanGeo([0,0,-0.4], [[0,0.024,-0.38],[0,0.09,-0.5],[0,0.15,-0.62],[0,0.06,-0.56],[0,0.0,-0.5],[0,-0.06,-0.56],[0,-0.14,-0.61],[0,-0.085,-0.5],[0,-0.022,-0.38]]);
+  const dorsal = triGeo([[[0,0.095,0.1],[0,0.165,-0.03],[0,0.08,-0.09]]]);
+  const pr = [[0.03,-0.035,0.27],[0.1,-0.075,0.15],[0.035,-0.05,0.19]];
+  const pect = triGeo([pr, pr.map(mirrorX).reverse()]);
+  const anal = triGeo([[[0,-0.06,-0.16],[0,-0.1,-0.27],[0,-0.045,-0.27]]]);
+  const pelv = triGeo([[[0.02,-0.085,0.02],[0.05,-0.11,-0.06],[0.02,-0.08,-0.05]],[[-0.02,-0.085,0.02],[-0.02,-0.08,-0.05],[-0.05,-0.11,-0.06]]]);
+  return mergeGeos([{geo:body,part:0},{geo:tail,part:1},{geo:dorsal,part:1},{geo:pect,part:1},{geo:anal,part:1},{geo:pelv,part:1}]);
+})();
+const sardineMat = envMat(new THREE.MeshStandardMaterial({color:0xffffff, metalness:0.8, roughness:0.3, side:THREE.DoubleSide}), 1.0);
+sardineMat.onBeforeCompile = sh => {
+  sh.uniforms.uTime = timeU;
+  sh.vertexShader = 'uniform float uTime;\nattribute float aPhase;\nattribute float aPart;\nvarying vec3 vLocal;\nvarying float vPart;\n' +
+    sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+      vLocal = position; vPart = aPart;
+      float sw = clamp((0.5 - position.z)/1.1, 0.0, 1.0);
+      transformed.x += sin(uTime*13.0 + aPhase - position.z*9.0) * 0.075 * sw*sw;
+      transformed.x += sin(uTime*13.0 + aPhase) * 0.006;`);
+  sh.fragmentShader = 'varying vec3 vLocal;\nvarying float vPart;\n' + sh.fragmentShader
+    .replace('#include <color_fragment>', `#include <color_fragment>
+      float backM = smoothstep(-0.005, 0.045, vLocal.y);
+      vec3 bc = mix(vec3(0.88,0.9,0.92), vec3(0.08,0.22,0.3), backM);
+      bc = mix(bc, vec3(0.32,0.5,0.58), smoothstep(0.012,0.0,abs(vLocal.y-0.02))*0.5);
+      vec2 q = vec2(fract(vLocal.z*20.0)-0.5, (vLocal.y-0.03)*20.0);
+      float spot = smoothstep(0.3,0.18,length(q)) * step(-0.28, vLocal.z) * step(vLocal.z, 0.3);
+      bc = mix(bc, vec3(0.04,0.07,0.09), spot*0.85);
+      float eyeD = length(vec2(vLocal.z-0.41, vLocal.y-0.014));
+      bc = mix(bc, vec3(0.75,0.72,0.55), smoothstep(0.026,0.02,eyeD));
+      bc = mix(bc, vec3(0.01), smoothstep(0.016,0.012,eyeD));
+      if(vPart > 0.5) bc = vec3(0.5,0.58,0.62);
+      diffuseColor.rgb = bc;`)
+    .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
+      roughnessFactor = vPart > 0.5 ? 0.65 : mix(0.22, 0.48, backM);`)
+    .replace('#include <metalnessmap_fragment>', `#include <metalnessmap_fragment>
+      metalnessFactor = vPart > 0.5 ? 0.15 : mix(0.95, 0.35, backM);`);
+};
+sardineMat.customProgramCacheKey = () => 'mulmit-sardine-v1';
+const schools = [];
+function gauss(){ return (Math.random()+Math.random()+Math.random()-1.5); }
+function makeSchool(n, depthOff, seed){
+  const geo = sardineGeo.clone();
+  const ph = new Float32Array(n);
+  for(let i=0;i<n;i++) ph[i] = Math.random()*6.283;
+  geo.setAttribute('aPhase', new THREE.InstancedBufferAttribute(ph, 1));
+  const mesh = new THREE.InstancedMesh(geo, sardineMat, n);
+  mesh.frustumCulled = false;
+  scene.add(mesh);
+  const f = [];
+  for(let i=0;i<n;i++) f.push({
+    lag: Math.random()*4.5,
+    o: new THREE.Vector3(gauss()*1.5, gauss()*0.85, gauss()*1.5),
+    w: Math.random()*6.283,
+    p: new THREE.Vector3(), v: new THREE.Vector3(), init:false,
+    s: 0.2 + Math.random()*0.07
+  });
+  const sc = {mesh, f, depthOff, seed, depth: 6 + depthOff*0.5};
+  schools.push(sc);
+  return sc;
+}
+// Legacy camera-depth schools are deliberately not spawned in this region.
+function schoolCenter(sc, t, out){
+  const k = sc.seed;
+  return out.set(
+    Math.sin(t*0.045 + k)*17 + Math.sin(t*0.11 + k*2.0)*4,
+    -sc.depth + Math.sin(t*0.07 + k)*1.6,
+    Math.sin(t*0.033 + k*1.7)*15 + Math.cos(t*0.052 + k)*6);
+}
+const dummy = new THREE.Object3D();
+const tA = new THREE.Vector3(), tB = new THREE.Vector3(), tC = new THREE.Vector3(), tD = new THREE.Vector3();
+function updateSchools(t, dt, camDepth){
+  for(const sc of schools){
+    const want = Math.min(35, Math.max(4, camDepth + sc.depthOff));
+    sc.depth += Math.sign(want - sc.depth) * Math.min(Math.abs(want - sc.depth), 0.35*dt);
+    const {mesh, f} = sc;
+    for(let i=0;i<f.length;i++){
+      const fi = f[i];
+      const tt = t - fi.lag;
+      schoolCenter(sc, tt, tA);
+      schoolCenter(sc, tt + 0.1, tB);
+      tC.copy(tB).sub(tA).multiplyScalar(10);
+      tA.add(fi.o);
+      tA.x += Math.sin(t*0.8 + fi.w)*0.35; tA.y += Math.sin(t*0.6 + fi.w*1.3)*0.2; tA.z += Math.cos(t*0.7 + fi.w)*0.35;
+      if(!fi.init){ fi.p.copy(tA); fi.v.copy(tC); fi.init = true; }
+      tD.copy(tA).sub(fi.p).multiplyScalar(1.4).add(tC);
+      fi.v.lerp(tD, Math.min(1, dt*2.6));
+      fi.p.addScaledVector(fi.v, dt);
+      dummy.position.copy(fi.p);
+      tB.copy(fi.p).add(fi.v);
+      dummy.lookAt(tB);
+      dummy.scale.setScalar(fi.s);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i, dummy.matrix);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+  }
+}
+
+/* ========== MANTA RAY ========== */
+const manta = (function(){
+  return new THREE.Group(); // Inactive in the Galapagos region.
+  const geo = new THREE.PlaneGeometry(1, 1, 80, 40);
+  const mat = new THREE.ShaderMaterial({
+    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime:{value:0} }]),
+    vertexShader:`
+      #include <common>
+      #include <fog_pars_vertex>
+      uniform float uTime;
+      varying vec3 vN; varying vec3 vW; varying vec2 vUV;
+      vec3 mantaPos(vec2 q){
+        float u = q.x*2.0 - 1.0; float v = clamp(q.y, 0.0, 1.0); float au = abs(u);
+        float front = 0.5 - 0.15*au - 0.62*au*au;
+        float back = -0.46 + 0.6*au - 0.44*au*au;
+        float z = mix(back, front, v);
+        float y = 0.1*pow(max(0.0, 1.0 - au*1.7), 1.4)*pow(sin(3.14159*v), 0.6);
+        float T = uTime*0.95;
+        y += 0.36*pow(au, 1.5)*sin(T - au*1.3 - (1.0 - v)*0.6);
+        y += 0.04*pow(au, 3.0);
+        float x = u*(1.0 - 0.06*pow(au,2.0)*(1.0 + sin(T - au*1.3)));
+        return vec3(x, y, z);
+      }
+      void main(){
+        vec3 p = mantaPos(uv);
+        float e = 0.004;
+        vec3 px = mantaPos(uv + vec2(e,0.0)) - mantaPos(uv - vec2(e,0.0));
+        vec3 pz = mantaPos(uv + vec2(0.0,e)) - mantaPos(uv - vec2(0.0,e));
+        vec3 c = cross(pz, px);
+        vec3 n = length(c) > 1e-7 ? normalize(c) : vec3(0.0,1.0,0.0);
+        vUV = uv;
+        vec4 wp = modelMatrix*vec4(p,1.0); vW = wp.xyz;
+        vN = normalize(mat3(modelMatrix)*n);
+        vec4 mvPosition = viewMatrix*wp;
+        gl_Position = projectionMatrix*mvPosition;
+        #include <fog_vertex>
+      }`,
+    fragmentShader:`
+      #include <common>
+      #include <fog_pars_fragment>
+      ${HASH_GLSL}
+      varying vec3 vN; varying vec3 vW; varying vec2 vUV;
+      void main(){
+        vec3 V = normalize(cameraPosition - vW);
+        vec3 N = normalize(vN);
+        bool top = dot(N, V) > 0.0;
+        if(!top) N = -N;
+        float u = vUV.x*2.0 - 1.0, v = vUV.y, au = abs(u);
+        vec3 col;
+        float edgeV = min(v, 1.0 - v);
+        if(top){
+          col = vec3(0.04,0.045,0.05);
+          float pu = au - 0.2 - (0.8 - v)*0.5; float pv = v - 0.66;
+          float patchM = smoothstep(1.0, 0.65, length(vec2(pu/0.085, pv/0.17))) * step(0.07, au);
+          col = mix(col, vec3(0.6,0.64,0.64), patchM*0.9);
+          col = mix(col, vec3(0.1,0.11,0.12), smoothstep(0.08,0.0,edgeV)*0.5);
+        } else {
+          col = vec3(0.84,0.87,0.86);
+          float margin = smoothstep(0.17,0.02,edgeV)*smoothstep(0.25,0.75,au) + smoothstep(0.86,1.0,au);
+          col = mix(col, vec3(0.12,0.13,0.14), clamp(margin,0.0,1.0)*0.85);
+          vec2 g = vec2(u*9.0, v*7.0); vec2 ci = floor(g); vec2 f = fract(g) - 0.5; float h = hsh(ci);
+          vec2 off = vec2(fract(h*7.13) - 0.5, fract(h*3.71) - 0.5)*0.5;
+          float spot = smoothstep(0.17,0.11,length(f - off))*step(0.5,h)*(1.0 - smoothstep(0.3,0.55,au))*step(0.25,v)*step(v,0.8);
+          col = mix(col, vec3(0.1), spot*0.85);
+          float gs = step(0.08,au)*step(au,0.2)*step(0.56,v)*step(v,0.82);
+          float gl = smoothstep(0.38,0.46,abs(fract(v*24.0) - 0.5));
+          col = mix(col, vec3(0.25), gs*gl*0.7);
+          col = mix(col, vec3(0.04), smoothstep(0.93,0.97,v)*step(au,0.13));
+        }
+        float lit = top ? (0.4 + 0.9*max(0.0, N.y)) : (0.55 + 0.3*max(0.0, -N.y));
+        vec3 R = reflect(-V, N);
+        float spec = top ? pow(max(0.0, R.y), 24.0)*0.25 : 0.0;
+        gl_FragColor = vec4(col*lit + spec, 1.0);
+        #include <fog_fragment>
+      }`,
+    fog:true, side:THREE.DoubleSide
+  });
+  mat.uniforms.uTime = timeU;
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(geo, mat);
+  body.frustumCulled = false;
+  g.add(body);
+  const dark = new THREE.MeshStandardMaterial({color:0x0c0f11, roughness:0.6});
+  [-1,1].forEach(sd => {
+    const ceph = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.028, 0.17, 10), dark);
+    ceph.position.set(0.105*sd, -0.01, 0.55);
+    ceph.rotation.set(Math.PI/2 + 0.35, 0, -0.25*sd);
+    g.add(ceph);
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.013, 10, 8), new THREE.MeshStandardMaterial({color:0x020303, roughness:0.2}));
+    eye.position.set(0.125*sd, 0.025, 0.46);
+    g.add(eye);
+  });
+  const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.016, 0.42, 8), dark);
+  tail.rotation.x = Math.PI/2; tail.position.set(0, 0.02, -0.64);
+  g.add(tail);
+  g.scale.setScalar(2.5);
+  scene.add(g);
+  return g;
+})();
+let mantaDepth = 6;
+function mantaPath(t, out){
+  const a = t*(Math.PI*2/85);
+  return out.set(Math.cos(a)*19 + 3, -mantaDepth + Math.sin(t*0.11)*1.6, Math.sin(a)*14 - 2);
+}
+
+/* ========== WHALE SHARK ========== */
+const sharkGeo = (function(){
+  const W = curve([[0,0],[0.004,0.046],[0.015,0.07],[0.05,0.088],[0.15,0.1],[0.3,0.102],[0.45,0.09],[0.6,0.07],[0.75,0.045],[0.88,0.026],[0.96,0.02],[1,0]]);
+  const H = curve([[0,0],[0.004,0.022],[0.015,0.035],[0.05,0.05],[0.15,0.075],[0.3,0.086],[0.45,0.083],[0.6,0.068],[0.75,0.048],[0.88,0.034],[0.96,0.03],[1,0]]);
+  const ridgeAngles = [Math.PI/2, Math.PI/2-0.5, Math.PI/2+0.5, Math.PI/2-1.0, Math.PI/2+1.0];
+  const body = tubeGeo(64, 30, 0.5, -0.5, (s, th) => {
+    const c = Math.cos(th), sn = Math.sin(th);
+    const e = 0.72 + 0.28*Math.min(1, s/0.22);
+    let x = Math.sign(c)*Math.pow(Math.abs(c), e)*W(s);
+    let y = Math.sign(sn)*Math.pow(Math.abs(sn), e)*H(s)*(sn < 0 ? 0.8 : 1);
+    if(sn > 0){
+      const fade = Math.min(1, Math.max(0, (s-0.1)/0.1)) * (1 - Math.min(1, Math.max(0, (s-0.7)/0.12)));
+      let b = 0;
+      for(const a of ridgeAngles) b += 0.045*Math.exp(-Math.pow((th - a)/0.06, 2));
+      x *= 1 + b*fade; y *= 1 + b*fade;
+    }
+    return [x, y];
+  }, 1.2);
+  const d1 = fanGeo([0,0.07,-0.03], [[0,0.078,0.04],[0,0.14,-0.04],[0,0.205,-0.13],[0,0.15,-0.11],[0,0.07,-0.1]]);
+  const d2 = triGeo([[[0,0.045,-0.22],[0,0.088,-0.29],[0,0.04,-0.28]]]);
+  const pr = [[0.082,-0.028,0.27],[0.2,-0.07,0.21],[0.34,-0.13,0.08],[0.24,-0.09,0.12],[0.078,-0.035,0.17]];
+  const pectR = fanGeo([0.1,-0.04,0.2], pr);
+  const pectL = fanGeo([-0.1,-0.04,0.2], pr.map(mirrorX).reverse());
+  const pv = [[0.04,-0.055,-0.08],[0.095,-0.1,-0.16],[0.035,-0.055,-0.14]];
+  const pelv = triGeo([pv, pv.map(mirrorX).reverse()]);
+  const anal = triGeo([[[0,-0.035,-0.27],[0,-0.075,-0.33],[0,-0.03,-0.32]]]);
+  const caudal = fanGeo([0,0.005,-0.49], [[0,0.026,-0.43],[0,0.16,-0.53],[0,0.31,-0.69],[0,0.2,-0.63],[0,0.08,-0.585],[0,0.02,-0.565],[0,-0.06,-0.585],[0,-0.17,-0.63],[0,-0.09,-0.53],[0,-0.021,-0.43],[0,0.026,-0.43]]);
+  const eyeR = new THREE.SphereGeometry(0.0075, 10, 8).translate(0.086, 0.012, 0.43);
+  const eyeL = new THREE.SphereGeometry(0.0075, 10, 8).translate(-0.086, 0.012, 0.43);
+  return mergeGeos([{geo:body,part:0},{geo:d1,part:1},{geo:d2,part:1},{geo:pectR,part:1},{geo:pectL,part:1},{geo:pelv,part:1},{geo:anal,part:1},{geo:caudal,part:1},{geo:eyeR,part:2},{geo:eyeL,part:2}]);
+})();
+const sharkMat = envMat(new THREE.MeshStandardMaterial({color:0xffffff, roughness:0.72, metalness:0.0, side:THREE.DoubleSide}), 0.5);
+sharkMat.onBeforeCompile = sh => {
+  sh.uniforms.uTime = timeU;
+  sh.vertexShader = 'uniform float uTime;\nattribute float aPart;\nvarying vec3 vLocal;\nvarying float vPart;\n' +
+    sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+      vLocal = position; vPart = aPart;
+      float ss = clamp(0.5 - position.z, 0.0, 1.3);
+      transformed.x += sin(uTime*1.25 - ss*4.5) * 0.065 * pow(ss, 2.2) + sin(uTime*1.25)*0.004;`);
+  sh.fragmentShader = 'varying vec3 vLocal;\nvarying float vPart;\n' + HASH_GLSL + '\n' + sh.fragmentShader
+    .replace('#include <color_fragment>', `#include <color_fragment>
+      float s = clamp(0.5 - vLocal.z, 0.0, 1.3);
+      float ang = atan(vLocal.y, abs(vLocal.x) + 1e-4);
+      float full = atan(vLocal.y, vLocal.x);
+      float belly = smoothstep(-0.12, -0.45, ang);
+      float pat = 0.0;
+      if(vPart > 0.5){
+        vec2 g = vec2(s*34.0, (vLocal.y + abs(vLocal.x))*46.0); vec2 c = floor(g); vec2 f = fract(g) - 0.5;
+        pat = smoothstep(0.3,0.18,length(f))*step(0.35,hsh(c));
+        belly = (abs(vLocal.x) > 0.09) ? 0.35 : 0.0;
+      } else if(s < 0.17){
+        vec2 g = vec2(s*85.0, full*10.0); vec2 c = floor(g); vec2 f = fract(g) - 0.5; float h = hsh(c);
+        pat = smoothstep(0.27,0.16,length(f - (vec2(h, fract(h*13.1)) - 0.5)*0.35));
+      } else {
+        vec2 g = vec2(s*22.0, full*4.6);
+        float lv = smoothstep(0.42,0.475,abs(fract(g.x) - 0.5));
+        float lh = smoothstep(0.43,0.48,abs(fract(g.y) - 0.5));
+        vec2 g2 = g*2.0; vec2 c = floor(g2); vec2 f = fract(g2) - 0.5; float h = hsh(c);
+        float sp = smoothstep(0.27,0.17,length(f - (vec2(h, fract(h*7.3)) - 0.5)*0.25));
+        pat = max(sp, max(lv, lh)*0.75) * (1.0 - smoothstep(0.85, 1.0, s)*0.5);
+      }
+      vec3 col = mix(vec3(0.12,0.18,0.22), vec3(0.78,0.84,0.85), pat*0.85);
+      col = mix(col, vec3(0.85,0.88,0.87), belly);
+      float gill = step(0.12,s)*step(s,0.205)*step(abs(ang),0.6)*smoothstep(0.38,0.46,abs(fract((s-0.12)*60.0) - 0.5));
+      col = mix(col, vec3(0.04,0.06,0.07), gill*0.75);
+      float mouth = (1.0 - smoothstep(0.004,0.009,abs(vLocal.y + 0.007))) * (1.0 - smoothstep(0.02,0.04,s)) * step(vPart, 0.5);
+      col = mix(col, vec3(0.02,0.03,0.03), mouth);
+      if(vPart > 1.5) col = vec3(0.01);
+      diffuseColor.rgb = col;`);
+};
+sharkMat.customProgramCacheKey = () => 'mulmit-whale-shark-v1';
+const shark = new THREE.Mesh(sharkGeo, sharkMat);
+shark.frustumCulled = false;
+shark.scale.setScalar(9.5);
+shark.visible = false; // Legacy whale shark is not part of this source-inspired region.
+let sharkDepth = 6;
+function sharkPath(t, out){
+  const a = t*0.043 + 2.1;
+  return out.set(Math.cos(a)*30 - 4, -sharkDepth + Math.sin(t*0.06)*1.2, Math.sin(a)*22 + 3);
+}
+
+/* ========== JELLYFISH ========== */
+const jellies = [];
+const bellGeo = new THREE.LatheGeometry([
+  new THREE.Vector2(0.001,0.30), new THREE.Vector2(0.12,0.295), new THREE.Vector2(0.24,0.27), new THREE.Vector2(0.34,0.225),
+  new THREE.Vector2(0.42,0.16), new THREE.Vector2(0.47,0.095), new THREE.Vector2(0.5,0.035), new THREE.Vector2(0.505,0.0), new THREE.Vector2(0.49,-0.015)
+], 56);
+const TENT_N = 110, TENT_SEG = 8;
+const tentGeo = (function(){
+  const th = [], sv = [];
+  for(let i=0;i<TENT_N;i++){
+    const a = i/TENT_N*Math.PI*2;
+    for(let k=0;k<TENT_SEG;k++){ th.push(a, a); sv.push(k/TENT_SEG, (k+1)/TENT_SEG); }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(new Float32Array(th.length*3), 3));
+  g.setAttribute('aTh', new THREE.Float32BufferAttribute(th, 1));
+  g.setAttribute('aS', new THREE.Float32BufferAttribute(sv, 1));
+  return g;
+})();
+const armGeo = new THREE.PlaneGeometry(1, 1, 2, 30);
+const gonadGeo = new THREE.TorusGeometry(0.075, 0.017, 8, 22, Math.PI*1.55);
+function jellyMaterials(bellCol, armCol, len, armLen, seed){
+  const fogU = () => THREE.UniformsUtils.clone(THREE.UniformsLib.fog);
+  const bell = new THREE.ShaderMaterial({
+    uniforms: Object.assign(fogU(), { uPulse:{value:0}, uColor:{value:new THREE.Color(bellCol)}, uGlow:{value:0} }),
+    vertexShader:`
+      #include <common>
+      #include <fog_pars_vertex>
+      uniform float uPulse; varying vec3 vN; varying vec3 vW; varying float vYr; varying float vAng;
+      void main(){
+        vec3 p = position;
+        float yr = clamp((0.30 - p.y)/0.34, 0.0, 1.0);
+        float k = 1.0 - 0.2*uPulse*yr*yr;
+        p.xz *= k; p.y += 0.05*uPulse*yr - 0.03*uPulse;
+        vYr = yr; vAng = atan(position.z, position.x);
+        vec4 wp = modelMatrix*vec4(p,1.0); vW = wp.xyz;
+        vN = normalize(mat3(modelMatrix)*normal);
+        vec4 mvPosition = viewMatrix*wp;
+        gl_Position = projectionMatrix*mvPosition;
+        #include <fog_vertex>
+      }`,
+    fragmentShader:`
+      #include <common>
+      #include <fog_pars_fragment>
+      uniform vec3 uColor; uniform float uGlow;
+      varying vec3 vN; varying vec3 vW; varying float vYr; varying float vAng;
+      void main(){
+        vec3 V = normalize(cameraPosition - vW);
+        float fr = 1.0 - abs(dot(normalize(vN), V));
+        float canals = smoothstep(0.86, 1.0, cos(vAng*16.0)) * (0.3 + 0.7*vYr) * 0.22;
+        float rim = smoothstep(0.86, 1.0, vYr);
+        vec3 col = uColor*(0.65 + 0.7*fr) + vec3(canals) + uColor*rim*0.5 + uColor*uGlow*(0.5 + rim);
+        float a = 0.04 + 0.55*pow(fr, 1.8) + canals*0.7 + rim*0.22;
+        gl_FragColor = vec4(col, clamp(a, 0.0, 0.85));
+        #include <fog_fragment>
+      }`,
+    transparent:true, depthWrite:false, side:THREE.DoubleSide, fog:true
+  });
+  const tent = new THREE.ShaderMaterial({
+    uniforms: Object.assign(fogU(), { uPulse:{value:0}, uTime:timeU, uLen:{value:len}, uSeed:{value:seed}, uColor:{value:new THREE.Color(bellCol)} }),
+    vertexShader:`
+      #include <common>
+      #include <fog_pars_vertex>
+      attribute float aTh; attribute float aS;
+      uniform float uPulse; uniform float uTime; uniform float uLen; uniform float uSeed;
+      varying float vS;
+      void main(){
+        float R = 0.495*(1.0 - 0.2*uPulse);
+        float rr = R*(1.0 - 0.12*aS*uPulse) + 0.02*aS;
+        vec3 p = vec3(cos(aTh)*rr, -0.012 + 0.02*uPulse - aS*uLen*(0.85 + 0.15*sin(aTh*7.0 + uSeed)), sin(aTh)*rr);
+        p.x += sin(uTime*0.9 + aS*4.0 + aTh*3.0 + uSeed)*0.08*aS;
+        p.z += cos(uTime*0.8 + aS*3.5 + aTh*2.0 + uSeed)*0.08*aS;
+        vS = aS;
+        vec4 mvPosition = modelViewMatrix*vec4(p,1.0);
+        gl_Position = projectionMatrix*mvPosition;
+        #include <fog_vertex>
+      }`,
+    fragmentShader:`
+      #include <common>
+      #include <fog_pars_fragment>
+      uniform vec3 uColor; varying float vS;
+      void main(){
+        gl_FragColor = vec4(uColor*1.1, 0.42*(1.0 - vS*0.8));
+        #include <fog_fragment>
+      }`,
+    transparent:true, depthWrite:false, fog:true
+  });
+  const arms = [0,1,2,3].map(k => new THREE.ShaderMaterial({
+    uniforms: Object.assign(fogU(), { uTime:timeU, uBase:{value:k*Math.PI/2 + seed}, uLen:{value:armLen}, uSeed:{value:seed + k}, uColor:{value:new THREE.Color(armCol)} }),
+    vertexShader:`
+      #include <common>
+      #include <fog_pars_vertex>
+      uniform float uTime; uniform float uBase; uniform float uLen; uniform float uSeed;
+      varying float vS; varying float vWd;
+      void main(){
+        float s = 1.0 - uv.y; float w = uv.x - 0.5;
+        float a = uBase + s*2.2 + sin(uTime*0.35 + uSeed)*0.3;
+        vec2 dir = vec2(cos(a), sin(a));
+        vec2 rad = vec2(cos(uBase), sin(uBase));
+        float width = 0.12*(1.0 - s*0.45)*(1.0 + 0.4*sin(s*34.0 + uTime*1.5)*s);
+        vec3 p;
+        p.xz = rad*(0.03 + 0.07*s) + dir*w*width + vec2(sin(uTime*0.7 + s*3.0 + uSeed), cos(uTime*0.6 + s*2.6 + uSeed))*0.09*s;
+        p.y = 0.05 - s*uLen;
+        vS = s; vWd = abs(w)*2.0;
+        vec4 mvPosition = modelViewMatrix*vec4(p,1.0);
+        gl_Position = projectionMatrix*mvPosition;
+        #include <fog_vertex>
+      }`,
+    fragmentShader:`
+      #include <common>
+      #include <fog_pars_fragment>
+      uniform vec3 uColor; varying float vS; varying float vWd;
+      void main(){
+        gl_FragColor = vec4(uColor*(0.8 + 0.5*vWd), (0.22 + 0.35*vWd)*(1.0 - vS*0.65));
+        #include <fog_fragment>
+      }`,
+    transparent:true, depthWrite:false, side:THREE.DoubleSide, fog:true
+  }));
+  return {bell, tent, arms};
+}
+(function spawnJellies(){
+  return; // No jellyfish encounters in this region.
+  for(let k=0;k<15;k++){
+    const moon = k % 3 !== 2;
+    const seed = Math.random()*10;
+    const mats = moon
+      ? jellyMaterials(0xbcd8ee, 0xe8dcf0, 0.28 + Math.random()*0.15, 0.55 + Math.random()*0.2, seed)
+      : jellyMaterials(0xe9b679, 0xd9774f, 1.6 + Math.random()*1.0, 1.3 + Math.random()*0.6, seed);
+    const g = new THREE.Group();
+    const inner = new THREE.Group();
+    g.add(inner);
+    const bell = new THREE.Mesh(bellGeo, mats.bell); bell.renderOrder = 2;
+    inner.add(bell);
+    const tents = new THREE.LineSegments(tentGeo, mats.tent); tents.frustumCulled = false;
+    inner.add(tents);
+    mats.arms.forEach(m => { const a = new THREE.Mesh(armGeo, m); a.frustumCulled = false; inner.add(a); });
+    const gonads = new THREE.Group();
+    if(moon){
+      const gm = new THREE.MeshBasicMaterial({color:0xd99bd6, transparent:true, opacity:0.55, depthWrite:false});
+      for(let q=0;q<4;q++){
+        const a = q*Math.PI/2 + 0.4;
+        const t = new THREE.Mesh(gonadGeo, gm);
+        t.rotation.x = -Math.PI/2;
+        t.rotation.z = a;
+        t.position.set(Math.cos(a)*0.06, 0.2, -Math.sin(a)*0.06);
+        gonads.add(t);
+      }
+    }
+    inner.add(gonads);
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex, color:moon ? 0x9fd8ff : 0xffc27a, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, fog:false, opacity:0}));
+    glow.scale.setScalar(1.6); glow.position.y = 0.12;
+    inner.add(glow);
+    const sc = moon ? 0.5 + Math.random()*0.4 : 0.55 + Math.random()*0.35;
+    g.scale.setScalar(sc);
+    const a = Math.random()*Math.PI*2, d = 4 + Math.random()*22;
+    const base = new THREE.Vector3(Math.cos(a)*d, -(4 + Math.random()*33), Math.sin(a)*d);
+    g.position.copy(base);
+    g.rotation.set((Math.random()-.5)*0.3, Math.random()*6, (Math.random()-.5)*0.3);
+    scene.add(g);
+    jellies.push({g, mats, gonads, glow, base, seed, period: 2.2 + Math.random()*1.2});
+  }
+})();
+function updateJellies(t){
+  for(const j of jellies){
+    const f = ((t/j.period + j.seed) % 1 + 1) % 1;
+    const p = f < 0.28 ? Math.sin(f/0.28*Math.PI/2) : Math.pow(1 - (f-0.28)/0.72, 2.2);
+    j.mats.bell.uniforms.uPulse.value = p;
+    j.mats.tent.uniforms.uPulse.value = p;
+    const k = 1 - 0.15*p;
+    j.gonads.scale.set(k, 1, k);
+    j.g.position.set(j.base.x + Math.sin(t*0.06 + j.seed)*2, j.base.y + Math.sin(t*0.1 + j.seed)*1.4, j.base.z + Math.cos(t*0.05 + j.seed)*2);
+    const dep = -j.g.position.y;
+    const glowK = Math.max(0, Math.min(1, (dep - 14)/20));
+    j.mats.bell.uniforms.uGlow.value = glowK*0.35;
+    j.glow.material.opacity = glowK*0.22*Math.exp(-j.g.position.distanceTo(camera.position)*0.04);
+  }
+}
+
+/* ---------- bubbles ---------- */
+const MAXB = 1200;
+const bPos = new Float32Array(MAXB*3), bSize = new Float32Array(MAXB), bAlpha = new Float32Array(MAXB);
+const bVel = new Float32Array(MAXB), bLife = new Float32Array(MAXB), bSeed = new Float32Array(MAXB);
+for(let i=0;i<MAXB;i++) bPos[i*3+1] = -999;
+let bHead = 0;
+const bGeo = new THREE.BufferGeometry();
+const bPosAttr = new THREE.BufferAttribute(bPos,3).setUsage(THREE.DynamicDrawUsage);
+const bSizeAttr = new THREE.BufferAttribute(bSize,1).setUsage(THREE.DynamicDrawUsage);
+const bAlphaAttr = new THREE.BufferAttribute(bAlpha,1).setUsage(THREE.DynamicDrawUsage);
+bGeo.setAttribute('position', bPosAttr); bGeo.setAttribute('aSize', bSizeAttr); bGeo.setAttribute('aAlpha', bAlphaAttr);
+const bubbleMat = new THREE.ShaderMaterial({
+  uniforms:{ uScale:{value:1} },
+  vertexShader:`
+    attribute float aSize; attribute float aAlpha; uniform float uScale; varying float vA;
+    void main(){ vec4 mv = modelViewMatrix*vec4(position,1.0);
+      gl_PointSize = clamp(aSize*uScale/-mv.z, 0.0, 70.0);
+      vA = aAlpha * exp(-length(mv.xyz)*0.035);
+      gl_Position = projectionMatrix*mv; }`,
+  fragmentShader:`
+    varying float vA;
+    void main(){
+      vec2 c = gl_PointCoord - 0.5; float d = length(c);
+      if(d > 0.5) discard;
+      float rim = smoothstep(0.5,0.43,d) * (0.18 + 0.82*smoothstep(0.28,0.46,d));
+      float hl = smoothstep(0.13,0.0,length(c - vec2(-0.16,-0.16)));
+      gl_FragColor = vec4(vec3(0.9,0.99,1.0), (rim*0.75 + hl*0.9) * vA);
+    }`,
+  transparent:true, depthWrite:false
+});
+const bubbles = new THREE.Points(bGeo, bubbleMat);
+bubbles.frustumCulled = false;
+bubbles.renderOrder = 5;
+scene.add(bubbles);
+function spawnBubble(x,y,z){
+  const i = bHead; bHead = (bHead+1)%MAXB;
+  bPos[i*3]=x; bPos[i*3+1]=y; bPos[i*3+2]=z;
+  bSize[i] = 0.018 + Math.pow(Math.random(),2.2)*0.06;
+  bVel[i] = 1.1 + Math.random()*1.3 + bSize[i]*12;
+  bLife[i] = 0.0001; bSeed[i] = Math.random()*10; bAlpha[i] = 0;
+}
+function updateBubbles(dt, t){
+  for(let i=0;i<MAXB;i++){
+    if(bLife[i] <= 0) continue;
+    bLife[i] += dt;
+    const k = i*3;
+    bPos[k+1] += bVel[i]*dt;
+    bPos[k] += Math.sin(t*3.2 + bSeed[i])*0.006;
+    bPos[k+2] += Math.cos(t*2.7 + bSeed[i])*0.006;
+    bSize[i] *= 1 + dt*0.025;
+    let a = Math.min(1, bLife[i]*5);
+    if(bPos[k+1] > -0.4) a *= Math.max(0, (-bPos[k+1])/0.4);
+    if(bLife[i] > 20 || bPos[k+1] > 0){ bLife[i] = 0; a = 0; bPos[k+1] = -999; }
+    bAlpha[i] = a;
+  }
+  bPosAttr.needsUpdate = true; bSizeAttr.needsUpdate = true; bAlphaAttr.needsUpdate = true;
+}
+
+/* ========== DIVERS ========== */
+function roundRect(g, x, y, w, h, r){
+  g.beginPath(); g.moveTo(x+r,y); g.lineTo(x+w-r,y); g.quadraticCurveTo(x+w,y,x+w,y+r); g.lineTo(x+w,y+h-r);
+  g.quadraticCurveTo(x+w,y+h,x+w-r,y+h); g.lineTo(x+r,y+h); g.quadraticCurveTo(x,y+h,x,y+h-r); g.lineTo(x,y+r);
+  g.quadraticCurveTo(x,y,x+r,y); g.closePath();
+}
+const flagCache = new Map();
+function flagTexture(cc){
+  if(flagCache.has(cc)) return flagCache.get(cc);
+  const c = document.createElement('canvas'); c.width = 192; c.height = 132;
+  const tex = new THREE.CanvasTexture(c);
+  const draw = () => {
+    const g = c.getContext('2d');
+    g.clearRect(0,0,c.width,c.height);
+    g.fillStyle = '#0e1418'; roundRect(g, 5, 5, 182, 122, 16); g.fill();
+    g.strokeStyle = 'rgba(225,242,244,.9)'; g.lineWidth = 5; g.stroke();
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.font = '66px "Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif';
+    g.fillText(flagEmoji(cc), 96, 54);
+    g.fillStyle = '#e6f4f5';
+    g.font = '700 28px "Helvetica Neue",Arial,sans-serif';
+    g.fillText(cc || 'SEA', 96, 106);
+    tex.needsUpdate = true;
+  };
+  draw();
+  if(document.fonts && document.fonts.load){
+    document.fonts.load('66px "Noto Color Emoji"', flagEmoji(cc)).then(draw).catch(()=>{});
+  }
+  flagCache.set(cc, tex);
+  return tex;
+}
+const finGeo = (function(){
+  const sh = new THREE.Shape();
+  sh.moveTo(-0.055, 0); sh.lineTo(0.055, 0); sh.lineTo(0.11, -0.5); sh.quadraticCurveTo(0.06, -0.58, 0.0, -0.52);
+  sh.quadraticCurveTo(-0.06, -0.58, -0.11, -0.5); sh.lineTo(-0.055, 0);
+  const g = new THREE.ShapeGeometry(sh, 6);
+  g.rotateX(Math.PI/2);
+  return g;
+})();
+const unitSphere = new THREE.SphereGeometry(1, 24, 16);
+function limb(parent, a, b, r1, r2, mat){
+  const A = new THREE.Vector3(a[0],a[1],a[2]), B = new THREE.Vector3(b[0],b[1],b[2]);
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r2, r1, A.distanceTo(B), 14, 1), mat);
+  m.position.copy(A).add(B).multiplyScalar(0.5);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), B.clone().sub(A).normalize());
+  parent.add(m);
+  return m;
+}
+function blob(parent, mat, x, y, z, sx, sy, sz){
+  const m = new THREE.Mesh(unitSphere, mat);
+  m.position.set(x,y,z); m.scale.set(sx,sy,sz);
+  parent.add(m);
+  return m;
+}
+const ACCENTS = [0xf2c14e, 0xe4572e, 0x3fc1c9, 0xff8fab, 0x7bd389, 0x8e7dff];
+function buildDiver(accentHex, tankHex, cc){
+  const root = new THREE.Group();
+  root.rotation.order = 'YXZ';
+  const suit = envMat(new THREE.MeshStandardMaterial({color:0x15191c, roughness:0.78, metalness:0}), 0.35);
+  const accent = envMat(new THREE.MeshStandardMaterial({color:accentHex, roughness:0.5, metalness:0, side:THREE.DoubleSide}), 0.5);
+  const black = envMat(new THREE.MeshStandardMaterial({color:0x0a0c0d, roughness:0.55, metalness:0}), 0.4);
+  const glass = envMat(new THREE.MeshStandardMaterial({color:0x163640, roughness:0.05, metalness:0.75}), 1.8);
+  const tank = envMat(new THREE.MeshStandardMaterial({color:tankHex, roughness:0.3, metalness:0.65}), 1.0);
+  const patchMat = new THREE.MeshBasicMaterial({map:flagTexture(cc), transparent:true});
+
+  // torso
+  blob(root, suit, 0, 0, 0.24, 0.2, 0.14, 0.31);
+  blob(root, suit, 0, 0.012, 0.44, 0.235, 0.13, 0.11);
+  blob(root, suit, 0, -0.01, -0.04, 0.165, 0.12, 0.14);
+  blob(root, accent, 0, -0.005, 0.24, 0.203, 0.028, 0.27);
+  limb(root, [0,0.02,0.5], [0,0.05,0.6], 0.056, 0.05, suit);
+  // head, hood, mask
+  blob(root, black, 0, 0.07, 0.68, 0.1, 0.105, 0.112);
+  const mask = new THREE.Group(); mask.position.set(0, 0.035, 0.775); mask.rotation.x = 0.35; root.add(mask);
+  mask.add(new THREE.Mesh(new THREE.BoxGeometry(0.175, 0.085, 0.05), black));
+  const lens = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.062, 0.012), glass); lens.position.z = 0.027; mask.add(lens);
+  const strap = new THREE.Mesh(new THREE.TorusGeometry(0.108, 0.009, 6, 28), black);
+  strap.position.set(0, 0.06, 0.68); strap.rotation.x = Math.PI/2 + 0.35; root.add(strap);
+  // regulator + hose
+  const reg = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.065, 14), black);
+  reg.rotation.x = Math.PI/2; reg.position.set(0, -0.045, 0.77); root.add(reg);
+  const hose = new THREE.CatmullRomCurve3([new THREE.Vector3(0.025,-0.045,0.77), new THREE.Vector3(0.12,-0.06,0.7), new THREE.Vector3(0.18,0.07,0.6), new THREE.Vector3(0.07,0.24,0.56)]);
+  root.add(new THREE.Mesh(new THREE.TubeGeometry(hose, 20, 0.011, 6), black));
+  // tank, valve, harness
+  const tk = new THREE.Mesh(new THREE.CylinderGeometry(0.087, 0.087, 0.56, 22), tank);
+  tk.rotation.x = Math.PI/2; tk.position.set(0, 0.215, 0.2); root.add(tk);
+  blob(root, tank, 0, 0.215, 0.48, 0.087, 0.087, 0.05);
+  blob(root, tank, 0, 0.215, -0.08, 0.087, 0.087, 0.05);
+  const valve = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.08, 10), black);
+  valve.rotation.x = Math.PI/2; valve.position.set(0, 0.215, 0.55); root.add(valve);
+  const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.016, 12), black);
+  knob.rotation.z = Math.PI/2; knob.position.set(0.04, 0.215, 0.55); root.add(knob);
+  const plate = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.025, 0.42), black); plate.position.set(0, 0.125, 0.22); root.add(plate);
+  [0.1, 0.34].forEach(z => {
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.017, 6, 30), black);
+    band.position.set(0, 0.035, z); band.scale.set(1.04, 0.8, 1); root.add(band);
+  });
+  // big flag on tank top
+  const tankPatch = new THREE.Mesh(new THREE.PlaneGeometry(0.13, 0.09), patchMat);
+  tankPatch.rotation.set(-Math.PI/2, 0, Math.PI); tankPatch.position.set(0, 0.305, 0.18); root.add(tankPatch);
+  // arms (right arm gets its own group so peers can wave it)
+  let armWave = null;
+  [-1, 1].forEach(sd => {
+    const sh = [0.22*sd, 0.02, 0.45], el = [0.245*sd, -0.19, 0.31], wr = [0.085*sd, -0.235, 0.44];
+    const arm = new THREE.Group();
+    arm.position.set(sh[0], sh[1], sh[2]);
+    const rel = v => [v[0]-sh[0], v[1]-sh[1], v[2]-sh[2]];
+    blob(arm, suit, 0, 0, 0, 0.062, 0.062, 0.062);
+    limb(arm, rel(sh), rel(el), 0.06, 0.05, suit);
+    blob(arm, suit, rel(el)[0], rel(el)[1], rel(el)[2], 0.05, 0.05, 0.05);
+    limb(arm, rel(el), rel(wr), 0.048, 0.04, suit);
+    blob(arm, black, wr[0] - 0.02*sd - sh[0], wr[1] - sh[1], wr[2] + 0.045 - sh[2], 0.042, 0.026, 0.065);
+    const patch = new THREE.Mesh(new THREE.PlaneGeometry(0.13, 0.09), patchMat);
+    patch.position.set(0.292*sd - sh[0], -0.075 - sh[1], 0.39 - sh[2]);
+    patch.lookAt(patch.position.x + sd, patch.position.y + 0.1, patch.position.z - 0.25);
+    arm.add(patch);
+    root.add(arm);
+    if(sd === 1) armWave = arm;
+  });
+  // torch in right hand + beam
+  const torch = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.03, 0.16, 12), black);
+  torch.rotation.x = Math.PI/2; torch.position.set(-0.07, -0.235, 0.53); root.add(torch);
+  const beamGeo = new THREE.CylinderGeometry(1.5, 0.035, 8, 24, 1, true);
+  beamGeo.translate(0, 4, 0); beamGeo.rotateX(Math.PI/2);
+  const beamMat = new THREE.ShaderMaterial({
+    uniforms:{ uI:{value:0} },
+    vertexShader:`varying vec2 vUv; varying vec3 vW; varying vec3 vN;
+      void main(){ vUv = uv; vec4 wp = modelMatrix*vec4(position,1.0); vW = wp.xyz; vN = normalize(mat3(modelMatrix)*normal);
+        gl_Position = projectionMatrix*viewMatrix*wp; }`,
+    fragmentShader:`uniform float uI; varying vec2 vUv; varying vec3 vW; varying vec3 vN;
+      void main(){ vec3 v = normalize(cameraPosition - vW);
+        float edge = pow(abs(dot(normalize(vN), v)), 1.6);
+        float a = edge * pow(1.0 - vUv.y, 1.8) * uI;
+        gl_FragColor = vec4(vec3(1.0,0.97,0.86), a); }`,
+    transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, side:THREE.DoubleSide
+  });
+  const beam = new THREE.Mesh(beamGeo, beamMat);
+  beam.position.set(-0.07, -0.235, 0.6); beam.rotation.x = 0.12;
+  root.add(beam);
+  const lamp = new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex, color:0xfff1d6, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, fog:false, opacity:0}));
+  lamp.scale.setScalar(0.5); lamp.position.set(-0.07, -0.235, 0.62); root.add(lamp);
+  // legs
+  const legs = [];
+  [-1, 1].forEach(sd => {
+    const hip = new THREE.Group(); hip.position.set(0.09*sd, -0.02, -0.08); root.add(hip);
+    limb(hip, [0,0,0], [0,0,-0.42], 0.08, 0.058, suit);
+    const knee = new THREE.Group(); knee.position.set(0, 0, -0.42); hip.add(knee);
+    blob(knee, suit, 0, 0, 0, 0.058, 0.058, 0.058);
+    limb(knee, [0,0,0], [0,0,-0.4], 0.056, 0.04, suit);
+    const ankle = new THREE.Group(); ankle.position.set(0, 0, -0.4); knee.add(ankle);
+    const pocket = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.07, 0.2), black); pocket.position.set(0, -0.015, -0.05); ankle.add(pocket);
+    const fin = new THREE.Mesh(finGeo, accent); fin.position.set(0, -0.02, -0.13); ankle.add(fin);
+    legs.push({hip, knee, ankle, sd});
+  });
+  root.userData = {legs, beamMat, lamp, arm: armWave};
+  return root;
+}
+
+/* ========== GIANT SEA TURTLE (resting on the floor) ========== */
+function volcanicShelf(x,z,cx,cz,rx,rz,h){return h*Math.exp(-((x-cx)*(x-cx)/(rx*rx)+(z-cz)*(z-cz)/(rz*rz)));}
+function floorH(x, z){
+  // Broad overlapping volcanic shelves. Fixed world coordinates; never camera-relative.
+  const natural=-41+volcanicShelf(x,z,0,2,24,24,25)+volcanicShelf(x,z,29,-9,17,20,20)+volcanicShelf(x,z,46,19,19,20,27)
+    +volcanicShelf(x,z,-31,-10,21,19,15)+volcanicShelf(x,z,-53,18,18,21,14)+volcanicShelf(x,z,29,-43,18,15,8)
+    +Math.sin(x*.19)*.45+Math.cos(z*.17)*.38;
+  // A broad, planar volcanic resting ledge. Its interior spans the sharks' entire
+  // footprint AND the 3m floor-grid triangles, so belly contact is not a tangent
+  // approximation over a curved seabed. Smoothly rejoin the surrounding slope.
+  const radius=Math.hypot(x-29,z+43),blend=Math.max(0,Math.min(1,(radius-8)/5));
+  const smooth=blend*blend*(3-2*blend),ledge=-32.4+.035*(x-29)+.025*(z+43);
+  return ledge+(natural-ledge)*smooth;
+}
+function gridH(x, z){
+  const st = 3, ox = (x + 210)/st, oz = (z + 210)/st;
+  const i = Math.floor(ox), k = Math.floor(oz), fx = ox - i, fz = oz - k;
+  const X0 = -210 + i*st, Z0 = -210 + k*st;
+  const a = floorH(X0, Z0), b = floorH(X0+st, Z0), c = floorH(X0, Z0+st), d = floorH(X0+st, Z0+st);
+  // Match PlaneGeometry's b-c diagonal exactly, rather than bilinear hovering.
+  return fx+fz<=1 ? a+(b-a)*fx+(c-a)*fz : d+(c-d)*(1-fx)+(b-d)*(1-fz);
+}
+const VOR_GLSL = `
+vec3 vor(vec2 p, float jit, out vec2 toC){
+  vec2 n = floor(p); vec2 f = fract(p);
+  float d1 = 8.0, d2 = 8.0; vec2 mc = n; toC = vec2(0.0);
+  for(int j=-1;j<=1;j++) for(int i=-1;i<=1;i++){
+    vec2 g = vec2(float(i), float(j));
+    vec2 o = vec2(hsh(n+g), hsh(n+g+17.31))*jit + 0.5*(1.0-jit);
+    vec2 r = g + o - f; float d = dot(r,r);
+    if(d < d1){ d2 = d1; d1 = d; mc = n+g; toC = r; } else if(d < d2){ d2 = d; }
+  }
+  return vec3(sqrt(d1), sqrt(d2) - sqrt(d1), hsh(mc));
+}`;
+function turtleMat(kind){
+  const m = envMat(new THREE.MeshStandardMaterial({color:0xffffff, roughness: kind === 'shell' ? 0.55 : 0.82, metalness:0}), kind === 'shell' ? 0.6 : 0.35);
+  let code;
+  if(kind === 'shell') code = `
+    vec2 tsC; vec2 tsP = vLocal.xz*vec2(2.6,2.9);
+    bool tsMarg = vLocal.y < 0.28;
+    if(tsMarg) tsP = vec2(atan(vLocal.z, vLocal.x)*4.2, vLocal.y*3.0);
+    vec3 tsV = vor(tsP, tsMarg ? 0.15 : 0.35, tsC);
+    float tsSeam = smoothstep(0.015, 0.06, tsV.y);
+    float tsRays = 0.5 + 0.5*sin(atan(tsC.y, tsC.x)*7.0 + tsV.z*20.0);
+    vec3 tsCol = mix(vec3(0.24,0.17,0.08), vec3(0.42,0.32,0.15), tsV.z);
+    tsCol = mix(tsCol, vec3(0.62,0.47,0.22), tsRays*smoothstep(0.55,0.05,tsV.x)*0.6);
+    tsCol = mix(tsCol, vec3(0.12,0.09,0.05), smoothstep(0.25,0.6,tsV.x)*0.35);
+    tsCol = mix(vec3(0.07,0.06,0.04), tsCol, tsSeam);
+    tsCol = mix(tsCol, vec3(0.38,0.42,0.3), smoothstep(0.7,0.95,vLocal.y)*0.35*hsh(floor(vLocal.xz*30.0)));
+    diffuseColor.rgb = tsCol;`;
+  else if(kind === 'skin') code = `
+    vec2 tkC; vec3 tkV = vor(vLocal.xz*7.0 + vLocal.y*4.0, 0.6, tkC);
+    float tkSeam = smoothstep(0.02, 0.09, tkV.y);
+    vec3 tkCol = mix(vec3(0.28,0.19,0.1), vec3(0.4,0.28,0.14), tkV.z);
+    diffuseColor.rgb = mix(vec3(0.8,0.72,0.5), tkCol, tkSeam);`;
+  else code = `diffuseColor.rgb = vec3(0.82,0.74,0.52);`;
+  m.onBeforeCompile = sh => {
+    sh.vertexShader = 'varying vec3 vLocal;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vLocal = position;');
+    sh.fragmentShader = 'varying vec3 vLocal;\n' + HASH_GLSL + '\n' + VOR_GLSL + '\n' +
+      sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n' + code);
+  };
+  m.customProgramCacheKey = () => 'turtle-' + kind;
+  return m;
+}
+const turtle = (function(){
+  return {g:new THREE.Group()}; // Replaced by the animated habitat turtle group.
+  const S = 1.6;
+  const g = new THREE.Group();
+  const shellM = turtleMat('shell'), skinM = turtleMat('skin'), bellyM = turtleMat('belly');
+  const shell = new THREE.Mesh(new THREE.SphereGeometry(1, 64, 28, 0, Math.PI*2, 0, Math.PI/2), shellM);
+  shell.scale.set(0.6, 0.27, 0.75); g.add(shell);
+  const belly = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 12, 0, Math.PI*2, Math.PI/2, Math.PI/2), bellyM);
+  belly.scale.set(0.56, 0.07, 0.71); g.add(belly);
+  const headG = new THREE.Group(); headG.position.set(0, 0.03, 0.66); g.add(headG);
+  limb(headG, [0,-0.01,-0.06], [0,0.02,0.12], 0.12, 0.1, skinM);
+  blob(headG, skinM, 0, 0.04, 0.22, 0.13, 0.105, 0.17);
+  const eyeM = envMat(new THREE.MeshStandardMaterial({color:0x050403, roughness:0.15}), 0.8);
+  [-1,1].forEach(sd => blob(headG, eyeM, 0.095*sd, 0.075, 0.27, 0.025, 0.022, 0.025));
+  blob(headG, bellyM, 0, 0.0, 0.345, 0.055, 0.04, 0.05);
+  const fl = [];
+  [-1,1].forEach(sd => {
+    const fg = new THREE.Group(); fg.position.set(0.42*sd, -0.01, 0.38);
+    fg.rotation.set(0, 0.5*sd, -0.12*sd); g.add(fg);
+    blob(fg, skinM, 0.38*sd, -0.03, 0, 0.48, 0.035, 0.13);
+    fl.push({fg, sd, base:0.5*sd});
+  });
+  [-1,1].forEach(sd => {
+    const rg = new THREE.Group(); rg.position.set(0.3*sd, -0.02, -0.6);
+    rg.rotation.set(0, 0.9*sd, -0.1*sd); g.add(rg);
+    blob(rg, skinM, 0.14*sd, -0.01, 0, 0.18, 0.03, 0.11);
+  });
+  limb(g, [0,-0.02,-0.7], [0,-0.04,-0.84], 0.04, 0.008, skinM);
+  const sc = document.createElement('canvas'); sc.width = sc.height = 128;
+  const sg = sc.getContext('2d'); const gr = sg.createRadialGradient(64,64,8,64,64,64);
+  gr.addColorStop(0,'rgba(0,0,0,0.6)'); gr.addColorStop(1,'rgba(0,0,0,0)'); sg.fillStyle = gr; sg.fillRect(0,0,128,128);
+  const shadow = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 2.2), new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(sc), transparent:true, depthWrite:false}));
+  shadow.rotation.x = -Math.PI/2; shadow.position.y = -0.055; g.add(shadow);
+  g.scale.setScalar(S);
+  const x = 1.5, z = -2.0, e = 0.6;
+  const up = new THREE.Vector3((gridH(x-e,z) - gridH(x+e,z))/(2*e), 1, (gridH(x,z-e) - gridH(x,z+e))/(2*e)).normalize();
+  g.position.set(x, gridH(x, z) + 0.06*S, z);
+  g.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), up);
+  g.rotateY(0.7);
+  scene.add(g);
+  return {g, shell, headG, fl};
+})();
+function updateTurtle(t){
+  turtle.shell.scale.y = 0.27*(1 + 0.012*Math.sin(t*0.45));
+  turtle.headG.rotation.y = 0.35*Math.sin(t*0.06) + 0.08*Math.sin(t*0.23);
+  turtle.headG.rotation.x = -0.08 - 0.08*Math.max(0, Math.sin(t*0.05 + 1.0));
+  for(const f of turtle.fl) f.fg.rotation.y = f.base + 0.06*f.sd*Math.sin(t*0.18 + f.sd);
+}
+
+/* ========== ADDITIONAL MARINE LIFE: metres, local forward +Z ========== */
+// Rounded, lenticular fins: a closed curved outline, not a single flat triangle.
+function marineFin(outline, thickness, horizontal, detail){
+  const path = new THREE.CatmullRomCurve3(outline.map(p=>new THREE.Vector3(...p)), true, 'centripetal');
+  const n = detail || 32, rings = detail && detail<=20 ? 3 : 4, P = [], I = [];
+  const center = new THREE.Vector3();
+  outline.forEach(p=>center.add(new THREE.Vector3(...p))); center.multiplyScalar(1/outline.length);
+  for(let side=0;side<2;side++) for(let r=0;r<=rings;r++) for(let j=0;j<=n;j++){
+    const f = r/rings, p = path.getPoint(j/n).sub(center).multiplyScalar(f).add(center);
+    p[horizontal ? 'y' : 'x'] += (side ? -1 : 1)*thickness*Math.sqrt(Math.max(0,1-f*f));
+    P.push(p.x,p.y,p.z);
+  }
+  const stride = (rings+1)*(n+1);
+  for(let side=0;side<2;side++) for(let r=0;r<rings;r++) for(let j=0;j<n;j++){
+    const a=side*stride+r*(n+1)+j,b=a+n+1;
+    if(side) I.push(a,a+1,b,b,a+1,b+1); else I.push(a,b,a+1,b,b+1,a+1);
+  }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));
+  g.setIndex(I); g.computeVertexNormals(); return g;
+}
+// Non-uniform, monotone Hermite interpolation avoids shoulder kinks caused by
+// applying uniformly spaced Catmull tangents to unevenly spaced profile knots.
+function marineProfile(knots){
+  const slopes=knots.slice(1).map((p,i)=>(p[1]-knots[i][1])/(p[0]-knots[i][0]));
+  const tangent=knots.map((p,i)=>{
+    if(i===0) return slopes[0];
+    if(i===knots.length-1) return slopes[i-1];
+    const a=slopes[i-1],b=slopes[i];
+    if(a*b<=0) return 0;
+    const left=p[0]-knots[i-1][0],right=knots[i+1][0]-p[0];
+    return 3*(left+right)/((2*right+left)/a+(right+2*left)/b);
+  });
+  return s=>{
+    if(s<=knots[0][0]) return knots[0][1];
+    if(s>=knots[knots.length-1][0]) return knots[knots.length-1][1];
+    let i=0;while(s>knots[i+1][0]) i++;
+    const h=knots[i+1][0]-knots[i][0],u=(s-knots[i][0])/h,u2=u*u,u3=u2*u;
+    return Math.max(0,(2*u3-3*u2+1)*knots[i][1]+(u3-2*u2+u)*h*tangent[i]+(-2*u3+3*u2)*knots[i+1][1]+(u3-u2)*h*tangent[i+1]);
+  };
+}
+function smoothMarineSeam(geo){
+  // Average coincident seam/pole normals once at construction, before merging.
+  const p=geo.attributes.position,n=geo.attributes.normal,groups=new Map();
+  for(let i=0;i<p.count;i++){
+    const key=Math.round(p.getX(i)*1e6)+','+Math.round(p.getY(i)*1e6)+','+Math.round(p.getZ(i)*1e6);
+    let g=groups.get(key);if(!g){g=[];groups.set(key,g);}g.push(i);
+  }
+  const v=new THREE.Vector3();
+  for(const ids of groups.values()) if(ids.length>1){
+    v.set(0,0,0);for(const i of ids){v.x+=n.getX(i);v.y+=n.getY(i);v.z+=n.getZ(i);}v.normalize();
+    for(const i of ids) n.setXYZ(i,v.x,v.y,v.z);
+  }
+  return geo;
+}
+function marineGeometry(kind){
+  const dolphin=kind==='dolphin', reef=kind==='reefShark', long=kind==='barracuda', clown=kind==='clownfish';
+  const W=(clown ? curve : marineProfile)(clown ? [[0,0],[.06,.07],[.2,.105],[.45,.1],[.7,.07],[.9,.025],[1,0]] :
+    long ? [[0,0],[.08,.02],[.2,.045],[.36,.052],[.55,.048],[.8,.028],[.95,.014],[1,0]] :
+    dolphin ? [[0,0],[.055,.03],[.14,.038],[.20,.095],[.29,.13],[.43,.14],[.63,.11],[.84,.045],[.96,.018],[1,0]] :
+    [[0,0],[.035,.035],[.13,.095],[.28,.135],[.45,.12],[.65,.078],[.86,.032],[.97,.016],[1,0]]);
+  const parts=[{geo:tubeGeo(clown?30:long?32:72,clown?16:long?14:36,.55,-.45,(s,th)=>{
+    const w=W(s), h=clown ? w*1.9 : long ? w*1.35 : dolphin ? w*1.05 : w*.87;
+    // Melon rises behind the narrow dolphin rostrum; barracuda jaw projects below its snout.
+    const cy=dolphin ? .025*Math.exp(-Math.pow((s-.27)/.12,2))-.025*(1-s) : long ? -.014*Math.exp(-Math.pow(s/.12,2)) : 0;
+    return [Math.cos(th)*w, Math.sin(th)*h+cy];
+  }),part:0}];
+  if(!clown) smoothMarineSeam(parts[0].geo);
+  const fin=(p,th=.009,h=false)=>parts.push({geo:marineFin(p,th,h,clown||long?20:32),part:1});
+  if(reef){
+    fin([[0,.09,.18],[0,.35,-.06],[0,.19,-.045],[0,.085,-.19]],.012);
+    fin([[0,.045,-.27],[0,.12,-.35],[0,.035,-.39]],.006);
+    fin([[0,.02,-.41],[0,.20,-.54],[0,.39,-.70],[0,.16,-.62],[0,.02,-.53],[0,-.20,-.65],[0,-.13,-.51],[0,-.02,-.41]],.012);
+  }else if(dolphin){
+    fin([[0,.12,.09],[0,.31,-.12],[0,.31,-.20],[0,.22,-.15],[0,.09,-.25]],.013);
+    fin([[0,.0,-.42],[.20,.005,-.49],[.30,.0,-.65],[.16,.0,-.60],[0,.0,-.55],[-.16,.0,-.60],[-.30,.0,-.65],[-.20,.005,-.49]],.014,true);
+  }else if(long){
+    fin([[0,.05,.21],[0,.15,.11],[0,.05,-.01]],.004);
+    fin([[0,.035,-.23],[0,.125,-.33],[0,.025,-.38]],.004);
+    fin([[0,.015,-.42],[0,.17,-.70],[0,.03,-.59],[0,0,-.54],[0,-.03,-.59],[0,-.17,-.70],[0,-.015,-.42]],.004);
+    fin([[0,-.03,-.23],[0,-.115,-.33],[0,-.025,-.38]],.004);
+  }else{
+    fin([[0,.14,.30],[0,.24,.15],[0,.24,-.16],[0,.10,-.35]],.01);
+    fin([[0,-.13,.0],[0,-.22,-.17],[0,-.10,-.35]],.009);
+    fin([[0,.023,-.40],[0,.12,-.56],[0,.115,-.68],[0,-.115,-.68],[0,-.12,-.56],[0,-.023,-.40]],.012);
+  }
+  for(const sd of [-1,1]){
+    const p=clown ? [[.075,-.04,.23],[.24,-.06,.16],[.22,-.13,.02],[.07,-.10,.10]] :
+      long ? [[.04,-.01,.29],[.12,-.075,.15],[.04,-.04,.19]] :
+      [[.10,-.04,.23],[dolphin?.32:.40,-.12,-.02],[.24,-.13,-.12],[.08,-.06,.10]];
+    fin(p.map(q=>[q[0]*sd,q[1],q[2]]),clown?.009:.008,true);
+    if(reef) fin([[.045*sd,-.045,-.16],[.16*sd,-.10,-.30],[.035*sd,-.03,-.29]],.006,true);
+    const ez=clown?.395:long?.405:dolphin?.32:.395;
+    const ex=clown?.091:long?.035:dolphin?.113:.105, ey=clown?.048:long?.016:dolphin?.02:.022;
+    const er=clown?.032:long?.015:.013;
+    parts.push({geo:new THREE.SphereGeometry(er,12,10).scale(.45,1,1).translate(ex*sd,ey,ez),part:3});
+    parts.push({geo:new THREE.SphereGeometry(er*.63,12,10).scale(.5,1,1).translate((ex+er*.30)*sd,ey,ez+.002),part:2});
+  }
+  const merged=mergeGeos(parts); parts.forEach(p=>p.geo.dispose()); return merged;
+}
+function marineMaterial(kind){
+  const vertical=kind==='dolphin', clown=kind==='clownfish', long=kind==='barracuda';
+  const speed=clown?11:long?7:vertical?3.5:2.7, amplitude=clown?.08:long?.045:vertical?.11:.095;
+  // Lower metallic fraction retains diffuse silver in the dim deep-water rig.
+  const m=envMat(new THREE.MeshStandardMaterial({color:0xffffff,roughness:long?.36:vertical?.40:.48,metalness:long?.32:0,side:THREE.DoubleSide}),long?1.15:vertical?.65:.42);
+  m.customProgramCacheKey=()=> 'mulmit-marine-'+kind+'-v2';
+  m.onBeforeCompile=sh=>{
+    sh.uniforms.uTime=timeU;
+    const bend=`uniform float uTime; attribute float aPhase; attribute float aPart;
+      varying vec3 vMarine; varying float vMarinePart;
+      vec2 marineBend(float z){
+        float s=clamp((.27-z)/.97,0.0,1.0);
+        float phase=uTime*${speed.toFixed(1)}+aPhase-s*3.8;
+        float d=sin(phase)*${amplitude.toFixed(3)}*s*s;
+        float derivative=s>0.0 && s<1.0 ? -${amplitude.toFixed(3)}/.97*(2.0*s*sin(phase)-3.8*s*s*cos(phase)) : 0.0;
+        return vec2(d,derivative);
+      }\n`;
+    const axis=vertical?'y':'x';
+    sh.vertexShader=bend+sh.vertexShader
+      .replace('#include <beginnormal_vertex>',`#include <beginnormal_vertex>
+        objectNormal.z-=objectNormal.${axis}*marineBend(position.z).y; objectNormal=normalize(objectNormal);`)
+      .replace('#include <begin_vertex>',`#include <begin_vertex>
+        vMarine=position; vMarinePart=aPart; transformed.${axis}+=marineBend(position.z).x;`);
+    let color;
+    if(clown) color=`
+      vec3 col=vec3(.98,.25,.018);
+      float z=vMarine.z;
+      float bands=min(abs(z-(.29+.08*vMarine.y)),min(abs(z-(-.035-.16*vMarine.y)),abs(z+.365)));
+      col=mix(col,vec3(.018,.022,.018),1.0-smoothstep(.069,.079,bands));
+      col=mix(col,vec3(.97,.96,.87),1.0-smoothstep(.047,.056,bands));
+      if(vMarinePart>.5 && vMarinePart<1.5){
+        float edge=max(abs(vMarine.y)/.24, max(abs(vMarine.x)/.24,(-vMarine.z-.53)/.15));
+        col=mix(col,vec3(.015),smoothstep(.83,.94,edge));
+        col*=.91+.09*cos(atan(vMarine.y,vMarine.z+.2)*65.0);
+      }
+      float gill=(1.0-smoothstep(.005,.014,abs(z-.25+.12*vMarine.y)))*step(abs(vMarine.y),.11);
+      col=mix(col,vec3(.22,.075,.012),gill*.6);`;
+    else if(long) color=`
+      vec3 col=mix(vec3(.86,.90,.90),vec3(.34,.43,.45),smoothstep(-.02,.065,vMarine.y));
+      float bars=pow(.5+.5*cos((vMarine.z+vMarine.y*.55)*80.0),8.0)*step(vMarine.z,.27)*step(-.39,vMarine.z)*smoothstep(-.035,.015,vMarine.y);
+      col=mix(col,vec3(.045,.085,.09),bars*.8);
+      col=mix(col,vec3(.55,.68,.68),(1.0-smoothstep(.003,.009,abs(vMarine.y)))*.5);
+      if(vMarinePart>.5) col*=.80;
+      float gill=(1.0-smoothstep(.003,.008,abs(vMarine.z-.30+.2*vMarine.y)))*step(abs(vMarine.y),.04);
+      col=mix(col,vec3(.055),gill*.85);`;
+    else color=`
+      vec3 col=mix(vec3(${vertical?'.85,.87,.86':'.79,.83,.81'}),vec3(${vertical?'.40,.47,.50':'.24,.31,.32'}),smoothstep(-.07,.055,vMarine.y));
+      if(vMarinePart>.5) col*=.87;
+      ${vertical ? `float blow=length(vec2(vMarine.x/.016,(vMarine.z-.25)/.024));
+        col=mix(col,vec3(.045), (1.0-smoothstep(.65,1.0,blow))*step(.10,vMarine.y));` : `
+        float gills=0.0;
+        for(int k=0;k<5;k++){
+          float z=.255-float(k)*.027+.12*vMarine.y;
+          gills=max(gills,(1.0-smoothstep(.002,.006,abs(vMarine.z-z)))*step(abs(vMarine.y+.015),.071));
+        }
+        col=mix(col,vec3(.065,.105,.11),gills*.88);`}`;
+    sh.fragmentShader='varying vec3 vMarine; varying float vMarinePart;\n'+sh.fragmentShader
+      .replace('#include <color_fragment>',`#include <color_fragment>
+        ${color}
+        float mouth=(1.0-smoothstep(.002,.006,abs(vMarine.y+${vertical?'.031':clown?'.02':long?'.019':'.043'}+.035*(vMarine.z-.4))))*step(.36,vMarine.z)*step(vMarinePart,.5);
+        col=mix(col,vec3(.035,.045,.044),mouth*.85);
+        if(vMarinePart>2.5) col=vec3(${clown?'.9,.59,.12':long?'.72,.72,.45':'.40,.43,.39'});
+        else if(vMarinePart>1.5) col=vec3(.006,.009,.01);
+        diffuseColor.rgb=col;`);
+    if(long || vertical){
+      // Small pattern-preserving ambient floor, still shaded/reflected/fogged.
+      // Uses final diffuse colour so bars, mouth and pupils do not glow white.
+      sh.fragmentShader=sh.fragmentShader.replace('#include <emissivemap_fragment>',`#include <emissivemap_fragment>
+        totalEmissiveRadiance+=diffuseColor.rgb*${long?'(.085+.035*abs(normal.y))':'(.055+.025*abs(normal.y))'};`);
+    }
+  };
+  return m;
+}
+function marineBatch(kind,count){
+  const geo=marineGeometry(kind), phase=new Float32Array(count);
+  for(let i=0;i<count;i++) phase[i]=i*2.399963;
+  geo.setAttribute('aPhase',new THREE.InstancedBufferAttribute(phase,1));
+  const mesh=new THREE.InstancedMesh(geo,marineMaterial(kind),count);
+  mesh.name='marine-'+kind; mesh.frustumCulled=false;
+  mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage); scene.add(mesh); return mesh;
+}
+/* ========== GALAPAGOS: fixed habitats, not an aquarium following the camera ========== */
+// Chapter labels describe the video; these are deliberately not taxonomic species IDs.
+const GALAPAGOS_ZONES=Object.freeze([
+  {id:'edge',name:'갈라진 현무암 가장자리',x:0,z:0,r:14,min:8,max:18,next:['silver','turtles','channel']},
+  {id:'silver',name:'은빛 물고기의 물길',x:-31,z:-10,r:14,min:18,max:28,next:['edge','reef','channel']},
+  {id:'turtles',name:'거북이 머무는 돌턱',x:29,z:-9,r:12,min:10,max:22,next:['edge','lions','rest']},
+  {id:'lions',name:'바다사자의 푸른 만',x:46,z:19,r:13,min:4,max:16,next:['turtles']},
+  {id:'reef',name:'상어가 도는 검은 능선',x:-53,z:18,r:12,min:22,max:32,next:['silver','blue']},
+  {id:'blue',name:'귀상어의 푸른 벽',x:-48,z:49,r:13,min:18,max:32,next:['reef']},
+  {id:'rest',name:'잠든 상어의 돌바닥',x:29,z:-43,r:12,min:28,max:39,next:['turtles','channel']},
+  {id:'channel',name:'바라쿠다의 해협',x:-5,z:-48,r:13,min:22,max:34,next:['edge','silver','rest']}
+]);
+const GALAPAGOS_SPECS=Object.freeze([
+  {kind:'crevice',label:'바위틈 작은 물고기',zone:'edge',n:26,size:.20,y:-13,rx:5,rz:4,speed:.09},
+  {kind:'trevally',label:'전갱이 큰 무리',zone:'silver',n:240,size:.82,y:-21,rx:5,rz:4,speed:.065},
+  {kind:'turtle',label:'바다거북 무리',zone:'turtles',n:5,size:1.25,y:-14,rx:5,rz:4,speed:.055},
+  {kind:'saddle',label:'안장돔 무리',zone:'turtles',n:76,size:.50,y:-18,rx:4,rz:4,speed:.07},
+  {kind:'seaLion',label:'바다사자',zone:'lions',n:4,size:1.65,y:-9,rx:7,rz:6,speed:.19},
+  {kind:'reefShark',label:'리프상어 무리',zone:'reef',n:12,size:2.05,y:-26,rx:8,rz:6,speed:.075},
+  {kind:'hammerhead',label:'귀상어 무리',zone:'blue',n:22,size:2.30,y:-24,rx:7,rz:6,speed:.065},
+  {kind:'resting',label:'바닥에서 쉬는 상어',zone:'rest',n:9,size:1.9,y:-36,rx:0,rz:0,speed:0},
+  {kind:'surgeon',label:'서전피시 무리',zone:'rest',n:88,size:.44,y:-29,rx:5,rz:3,speed:.09},
+  {kind:'barracuda',label:'바라쿠다 무리',zone:'channel',n:58,size:1.10,y:-26,rx:6,rz:4,speed:.06},
+  {kind:'orca',label:'멀리 수면을 지나는 범고래',zone:'lions',n:2,size:5.2,y:-2.5,rx:0,rz:0,speed:.035}
+]);
+const galZoneLookup=Object.create(null);
+for(const z of GALAPAGOS_ZONES)galZoneLookup[z.id]=z;
+function galZone(id){return galZoneLookup[id];}
+function galSample(s,t,i,out){
+  const z=galZone(s.zone), phase=i*2.399963, a=t*s.speed;
+  if(s.kind==='orca'){
+    // A broad offshore circuit: a short coastal pass once per ~180 seconds.
+    // Never teleported, hidden on a timer, attracted to or aimed at a swimmer.
+    return out.set(89-35*Math.cos(a)+i*7,-4.6-i*.8,35+88*Math.sin(a)+i*4);
+  }
+  if(s.kind==='resting'){
+    const x=z.x+((i%3)-1)*3.6+Math.sin(i*2.4)*.45, zz=z.z+(Math.floor(i/3)-1)*3.3+Math.cos(i*2.4)*.4;
+    // Flat belly meets the planar ledge with a 4mm clearance; never bury bodies.
+    const tilt=Math.sqrt(1+.035*.035+.025*.025);
+    return out.set(x,gridH(x,zz)+(s.size*.09+.004)*tilt,zz);
+  }
+  const large=s.kind==='reefShark'||s.kind==='hammerhead'||s.kind==='seaLion'||s.kind==='turtle';
+  const angle=large ? a+i*6.283185/s.n : a;
+  const spread=large ? 0 : Math.sqrt((i+.5)/s.n)*5.5;
+  const x=z.x+Math.sin(angle)*s.rx+Math.cos(phase)*spread;
+  const zz=z.z+Math.cos(angle)*s.rz+Math.sin(phase)*spread;
+  let y=s.y+Math.sin(t*.22+phase)*(large?1.1:.55)+(large?((i%3)-1)*1.25:((i%7)-3)*.42);
+  if(s.kind==='crevice') y=gridH(x,zz)+.65+((i%4)*.25);
+  return out.set(x,Math.max(y,gridH(x,zz)+(s.kind==='crevice'? .65:2.2)),zz);
+}
+// Build one merged, shaded geometry per silhouette. Part IDs also drive flippers.
+function galGeometry(kind){
+  if(kind==='resting'){
+    const g=marineGeometry('reefShark'),p=g.attributes.position;
+    for(let i=0;i<p.count;i++)if(p.getY(i)<-.09)p.setY(i,-.09);
+    g.computeVertexNormals();return g;
+  }
+  if(kind==='reefShark'||kind==='barracuda') return marineGeometry(kind);
+  if(kind==='hammerhead'){
+    const base=marineGeometry('reefShark');
+    // A real lateral cephalofoil, nearly four times the trunk width.
+    const head=new THREE.SphereGeometry(1,24,10).scale(.48,.065,.11).translate(0,.005,.40);
+    const parts=[{geo:base,part:0},{geo:head,part:0}];
+    for(const sd of [-1,1]) parts.push({geo:new THREE.SphereGeometry(.018,8,6).translate(sd*.468,.018,.43),part:2});
+    return mergeGeos(parts);
+  }
+  const parts=[];
+  const ell=(x,y,z,sx,sy,sz,part=0)=>parts.push({geo:new THREE.SphereGeometry(1,20,12).scale(sx,sy,sz).translate(x,y,z),part});
+  const fin=(pts,part=1,h=true)=>parts.push({geo:marineFin(pts,.008,h,20),part});
+  if(kind==='turtle'){
+    ell(0,.10,0,.43,.22,.57,4);ell(0,-.025,0,.41,.075,.54,5);
+    ell(0,.025,.64,.11,.09,.20);ell(0,.03,.48,.10,.08,.17);
+    for(const sd of [-1,1]){
+      fin([[sd*.29,0,.32],[sd*.85,-.045,.07],[sd*.72,-.03,-.11],[sd*.34,0,.13]],sd<0?6:7);
+      fin([[sd*.26,-.015,-.35],[sd*.51,-.03,-.52],[sd*.28,-.025,-.51]],sd<0?6:7);
+      ell(sd*.085,.065,.73,.018,.018,.022,2);
+    }
+  }else if(kind==='seaLion'||kind==='orca'){
+    const orca=kind==='orca';
+    const profile=marineProfile(orca ? [[0,0],[.08,.12],[.25,.20],[.45,.21],[.65,.16],[.83,.08],[1,.015]] : [[0,0],[.12,.08],[.27,.13],[.43,.17],[.62,.14],[.83,.07],[1,.018]]);
+    parts.push({geo:tubeGeo(42,24,.60,-.65,(s,th)=>[Math.cos(th)*profile(s),Math.sin(th)*profile(s)*.95]),part:0});
+    if(orca){
+      fin([[0,.16,.10],[0,.72,-.13],[0,.49,-.19],[0,.13,-.30]],1,false);
+      fin([[0,0,-.60],[.40,0,-.78],[.28,0,-.83],[0,0,-.72],[-.28,0,-.83],[-.40,0,-.78]]);
+    }else{
+      // Visible raised neck, round head, blunt muzzle and dark nose.
+      ell(0,.08,.42,.13,.15,.22);ell(0,.14,.60,.13,.125,.14);
+      ell(0,.095,.72,.10,.062,.095,5);ell(0,.12,.794,.046,.028,.024,2);
+      for(const sd of [-1,1]){
+        for(let k=0;k<5;k++){
+          const g=new THREE.CylinderGeometry(.0018,.0018,.24,3);
+          g.rotateZ(Math.PI/2);g.rotateY(sd*(k-2)*.12);g.translate(sd*.15,.09+k*.009,.73-(k-2)*.015);
+          parts.push({geo:g,part:5});
+        }
+        fin([[0,0,-.60],[sd*.17,-.015,-.84],[sd*.21,0,-.72],[sd*.055,0,-.56]],sd<0?6:7);
+      }
+    }
+    for(const sd of [-1,1]){
+      fin([[sd*.12,-.02,.21],[sd*(orca?.43:.42),-.16,-.10],[sd*.34,-.15,-.24],[sd*.12,-.06,.01]],sd<0?6:7);
+      ell(sd*(orca?.115:.102),orca?.05:.19,orca?.48:.65,.013,.015,.018,2);
+    }
+  }else{
+    const disk=kind==='surgeon', silver=kind==='trevally';
+    const h=disk?.33:silver?.23:.25, w=disk?.075:.09;
+    ell(0,0,0,w,h,.39);
+    fin([[0,.02,-.32],[0,.25,-.64],[0,.10,-.56],[0,0,-.45],[0,-.10,-.56],[0,-.25,-.64],[0,-.02,-.32]],1,false);
+    fin([[0,h*.6,.23],[0,h*1.30,.06],[0,h*1.1,-.24],[0,h*.6,-.31]],1,false);
+    fin([[0,-h*.5,.13],[0,-h*1.18,-.12],[0,-h*.6,-.31]],1,false);
+    for(const sd of [-1,1]){
+      fin([[sd*.07,-.015,.20],[sd*.24,-.07,-.01],[sd*.07,-.08,.01]]);
+      ell(sd*w*.86,h*.26,.28,.018,.025,.025,3);ell(sd*(w+.005),h*.26,.29,.012,.016,.016,2);
+    }
+  }
+  const g=mergeGeos(parts);parts.forEach(p=>p.geo.dispose());return g;
+}
+function galMaterial(kind){
+  const sharkLike=kind==='reefShark'||kind==='resting'||kind==='hammerhead';
+  const m=envMat(new THREE.MeshStandardMaterial({color:0xffffff,roughness:.57,metalness:kind==='trevally'?.38:.08,side:THREE.DoubleSide}),.65);
+  m.onBeforeCompile=sh=>{
+    sh.uniforms.uTime=timeU;
+    sh.vertexShader=`uniform float uTime; attribute float aPart; attribute float aPhase;
+      varying vec3 vAnimal; varying float vAnimalPart; varying float vDistance;
+      `+sh.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
+      vAnimal=position; vAnimalPart=aPart;
+      float beat=uTime*${kind==='resting'?'0.65':kind==='seaLion'?'3.4':kind==='turtle'?'1.8':'4.8'}+aPhase;
+      ${kind==='turtle'||kind==='seaLion' ? `if(aPart>5.5) transformed.y+=sin(beat+step(6.5,aPart)*.5)*abs(position.x)*.28;` : `float rear=max(0.0,-position.z-.04);transformed.${kind==='orca'?'y':'x'}+=sin(beat-position.z*4.0)*rear*rear*${kind==='resting'?'.014':'.16'};`}
+      `).replace('#include <worldpos_vertex>',`#include <worldpos_vertex>
+      vec4 galWorld=vec4(transformed,1.0);
+      #ifdef USE_INSTANCING
+      galWorld=instanceMatrix*galWorld;
+      #endif
+      vDistance=length((modelMatrix*galWorld).xyz-cameraPosition);`);
+    let color;
+    if(kind==='orca') color=`vec3 col=vec3(.022,.032,.037);
+      float belly=1.0-smoothstep(-.12,-.055,vAnimal.y);col=mix(col,vec3(.92,.94,.88),belly);
+      float eyePatchDistance=length(vec2((vAnimal.z-.36)/.115,(vAnimal.y-.075)/.049));
+      col=mix(col,vec3(.95,.96,.90),(1.0-smoothstep(.8,1.0,eyePatchDistance))*step(.08,abs(vAnimal.x)));
+      float saddleZ=(vAnimal.z+.26)/.15;
+      float saddle=exp(-saddleZ*saddleZ)*smoothstep(.05,.15,vAnimal.y);col=mix(col,vec3(.48,.54,.53),saddle*.9);`;
+    else if(kind==='turtle') color=`vec3 col=vec3(.32,.36,.19);
+      if(vAnimalPart>3.5 && vAnimalPart<4.5){vec2 uv=vAnimal.xz*9.0;float seam=min(abs(fract(uv.x+floor(uv.y)*.5)-.5),abs(fract(uv.y)-.5));col=mix(vec3(.12,.19,.12),vec3(.40,.43,.24),smoothstep(.025,.07,seam));}
+      if(vAnimalPart>4.5 && vAnimalPart<5.5) col=vec3(.67,.65,.42);`;
+    else if(kind==='seaLion') color=`vec3 col=mix(vec3(.28,.24,.16),vec3(.12,.16,.13),smoothstep(-.05,.13,vAnimal.y));if(vAnimalPart>4.5 && vAnimalPart<5.5) col=vec3(.66,.64,.47);`;
+    else if(kind==='saddle') color=`vec3 col=mix(vec3(.69,.53,.23),vec3(.79,.73,.43),smoothstep(-.2,.0,vAnimal.y));float saddle=exp(-pow(abs((vAnimal.z+.03)/.14),4.0))*smoothstep(-.02,.12,vAnimal.y);col=mix(col,vec3(.18,.13,.07),saddle);if(vAnimalPart>.5 && vAnimalPart<1.5)col=vec3(.72,.57,.16);`;
+    else if(kind==='surgeon') color=`vec3 col=vec3(.29,.40,.43);float bands=pow(.5+.5*cos(vAnimal.z*55.0),12.0);col*=1.0-bands*.32;if(vAnimalPart>.5 && vAnimalPart<1.5)col=vec3(.68,.65,.32);`;
+    else color=`vec3 col=mix(vec3(.79,.84,.80),vec3(${sharkLike?'.27,.36,.35':'.35,.48,.46'}),smoothstep(-.09,.12,vAnimal.y));
+      ${kind==='barracuda'?`col*=1.0-pow(.5+.5*cos(vAnimal.z*82.0+vAnimal.y*12.0),10.0)*.48;`:''}
+      ${sharkLike?`float gill=pow(.5+.5*cos((vAnimal.z+.2*vAnimal.y)*220.0),12.0)*step(.1,vAnimal.z)*step(vAnimal.z,.26)*step(abs(vAnimal.y),.07);col*=1.0-gill*.65;`:''}`;
+    sh.fragmentShader='varying vec3 vAnimal; varying float vAnimalPart; varying float vDistance;\n'+sh.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+      ${color}
+      if(vAnimalPart>1.5 && vAnimalPart<2.5)col=vec3(.006,.012,.013);
+      if(vAnimalPart>2.5 && vAnimalPart<3.5)col=vec3(.73,.70,.40);
+      diffuseColor.rgb=col;`).replace('#include <emissivemap_fragment>',`#include <emissivemap_fragment>
+      totalEmissiveRadiance+=diffuseColor.rgb*.045;`).replace('#include <dithering_fragment>',`#include <dithering_fragment>
+      // Blend into the fog before the 125m CPU LOD boundary; no silhouette pop-in.
+      gl_FragColor.rgb=mix(gl_FragColor.rgb,fogColor,smoothstep(65.0,105.0,vDistance));`);
+  };
+  m.customProgramCacheKey=()=> 'galapagos-'+kind+'-v2';return m;
+}
+const galDummy=new THREE.Object3D(),galP=new THREE.Vector3(),galQ=new THREE.Vector3();
+const galUp=new THREE.Vector3(0,1,0),galNormal=new THREE.Vector3();
+const galBatches=GALAPAGOS_SPECS.map(s=>{
+  const geo=galGeometry(s.kind),ph=new Float32Array(s.n);
+  for(let i=0;i<s.n;i++)ph[i]=i*2.399963;
+  geo.setAttribute('aPhase',new THREE.InstancedBufferAttribute(ph,1));
+  const mesh=new THREE.InstancedMesh(geo,galMaterial(s.kind),s.n);
+  mesh.name='galapagos-'+s.kind;mesh.frustumCulled=false;mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);scene.add(mesh);
+  return {s,mesh};
+});
+function updateGalapagos(t){
+  for(const b of galBatches){
+    const s=b.s,z=galZone(s.zone);
+    // Only cull beyond fully fog-blended range INCLUDING patrol extent.
+    b.mesh.visible=s.kind==='orca'||Math.hypot(camera.position.x-z.x,camera.position.z-z.z)<150;
+    if(!b.mesh.visible)continue;
+    for(let i=0;i<s.n;i++){
+      galSample(s,t,i,galP);galSample(s,t+.08,i,galQ);galDummy.position.copy(galP);
+      if(s.kind==='resting'){
+        const e=.3;
+        galNormal.set((gridH(galP.x-e,galP.z)-gridH(galP.x+e,galP.z))/(2*e),1,(gridH(galP.x,galP.z-e)-gridH(galP.x,galP.z+e))/(2*e)).normalize();
+        galDummy.quaternion.setFromUnitVectors(galUp,galNormal);galDummy.rotateY(.35+Math.sin(i*1.7)*.85);
+      }else{galDummy.lookAt(galQ);if(s.kind==='seaLion')galDummy.rotateZ(Math.sin(t*.42+i)*.45);}
+      galDummy.scale.setScalar(s.size*(s.kind==='resting'?1: .92+(i%5)*.04));galDummy.updateMatrix();b.mesh.setMatrixAt(i,galDummy.matrix);
+    }
+    b.mesh.instanceMatrix.needsUpdate=true;
+  }
+}
+(function volcanicHabitats(){
+  const rnd=lcg(.8321),rockGeo=new THREE.IcosahedronGeometry(1,1);
+  const rockMat=envMat(new THREE.MeshStandardMaterial({color:0x293e39,roughness:.98}),.18);
+  const rocks=new THREE.InstancedMesh(rockGeo,rockMat,176);rocks.frustumCulled=false;rocks.name='galapagos-basalt';
+  let index=0;
+  for(const z of GALAPAGOS_ZONES){
+    for(let i=0;i<22;i++){
+      const a=rnd()*Math.PI*2,r=(z.id==='rest'?9:5)+rnd()*(z.id==='rest'?5:9),x=z.x+Math.cos(a)*r,zz=z.z+Math.sin(a)*r;
+      const h=.4+rnd()*1.6;
+      galDummy.position.set(x,gridH(x,zz)-h*.55,zz);galDummy.rotation.set(0,rnd()*6.28,0);
+      galDummy.scale.set(1.1+rnd()*2.2,h,1+rnd()*2);galDummy.updateMatrix();rocks.setMatrixAt(index++,galDummy.matrix);
+    }
+  }
+  scene.add(rocks);
+  // A few low encrusting corals / algae at the entry, not giant colorful branches.
+  const algae=new THREE.InstancedMesh(new THREE.SphereGeometry(1,10,6),new THREE.MeshLambertMaterial({color:0x657557}),36);
+  for(let i=0;i<36;i++){
+    const x=(rnd()-.5)*18,zz=(rnd()-.5)*16;
+    galDummy.position.set(x,gridH(x,zz)+.025,zz);galDummy.rotation.set(0,0,0);galDummy.scale.set(.2+rnd()*.28,.07+rnd()*.10,.25+rnd()*.20);galDummy.updateMatrix();algae.setMatrixAt(i,galDummy.matrix);
+  }
+  algae.name='galapagos-sparse-algae';scene.add(algae);
+  const coral=new THREE.InstancedMesh(brainCoral(.43),new THREE.MeshLambertMaterial({color:0x8a8970}),12);
+  for(let i=0;i<12;i++){
+    const x=(rnd()-.5)*16,zz=(rnd()-.5)*14,sc=.17+rnd()*.24;
+    galDummy.position.set(x,gridH(x,zz)-.015,zz);galDummy.scale.setScalar(sc);galDummy.updateMatrix();coral.setMatrixAt(i,galDummy.matrix);
+  }
+  coral.name='galapagos-small-encrusting-coral';scene.add(coral);
+  const c=document.createElement('canvas');c.width=c.height=64;
+  const g=c.getContext('2d'),gradient=g.createRadialGradient(32,32,4,32,32,32);
+  gradient.addColorStop(0,'rgba(0,0,0,.78)');gradient.addColorStop(.45,'rgba(0,0,0,.38)');gradient.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gradient;g.fillRect(0,0,64,64);
+  const shadowGeo=new THREE.PlaneGeometry(1,1);shadowGeo.rotateX(-Math.PI/2);
+  const shadows=new THREE.InstancedMesh(shadowGeo,new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1}),9);
+  const resting=GALAPAGOS_SPECS.find(s=>s.kind==='resting');
+  for(let i=0;i<9;i++){
+    galSample(resting,0,i,galP);const x=galP.x,z=galP.z,e=.3;
+    galNormal.set((gridH(x-e,z)-gridH(x+e,z))/(2*e),1,(gridH(x,z-e)-gridH(x,z+e))/(2*e)).normalize();
+    galDummy.position.set(x,gridH(x,z)+.05,z);galDummy.quaternion.setFromUnitVectors(galUp,galNormal);galDummy.rotateY(.35+Math.sin(i*1.7)*.85);galDummy.scale.set(1.55,1,2.5);galDummy.updateMatrix();shadows.setMatrixAt(i,galDummy.matrix);
+  }
+  shadows.name='galapagos-resting-contact';shadows.frustumCulled=false;scene.add(shadows);
+})();
+let routeOn=false,galHudAt=-1,galCurrent='';
+$('routeBtn').addEventListener('click',()=>{routeOn=!routeOn;$('routeBtn').setAttribute('aria-pressed',String(routeOn));$('routeBtn').textContent=routeOn?'물길 힌트 끄기':'물길 힌트 켜기';$('routeHint').hidden=!routeOn;galHudAt=-1;});
+function updateGalHud(t){
+  if(t-galHudAt<.4)return;galHudAt=t;
+  let nearest=GALAPAGOS_ZONES[0],best=Infinity;
+  for(const z of GALAPAGOS_ZONES){const d=Math.hypot(posX-z.x,posZ-z.z);if(d<best){best=d;nearest=z;}}
+  galCurrent=nearest.id;
+  $('habitatName').textContent=best<nearest.r ? `${nearest.name} · ${nearest.min}–${nearest.max}m` : '고요한 물길 · 능선 사이';
+  if(routeOn){
+    let text='';
+    for(const id of nearest.next){const z=galZone(id),d=Math.hypot(z.x-posX,z.z-posZ),angle=Math.atan2(z.x-posX,z.z-posZ)-yaw;
+      const relative=Math.atan2(Math.sin(angle),Math.cos(angle));
+      const direction=Math.abs(relative)<.55?'앞쪽':Math.abs(relative)>2.5?'뒤쪽':relative>0?'왼쪽':'오른쪽';
+      text+=(text?' · ':'')+`${direction} ${z.name} ${Math.round(d)}m`;
+    }
+    $('routeHint').textContent=text;
+  }
+}
+// Read-only snapshots: no camera setters, live mesh references or mutable config exposed.
+Object.defineProperty(window,'__mulmitGalapagos',{value:Object.freeze({
+  snapshot:()=>({time:timeU.value,zone:galCurrent,position:{x:posX,z:posZ,depth},drawCalls:renderer.info.render.calls,
+    zones:GALAPAGOS_ZONES.map(z=>({...z,next:z.next.slice()})),
+    creatures:galBatches.map(b=>({kind:b.s.kind,count:b.s.n,anchor:b.s.zone,visible:b.mesh.visible})),
+    offshore:{camera:camera.position.toArray(),heading:[yaw,pitch],passagePeriod:2*Math.PI/.035,
+      animals:[0,1].map(i=>{const p=galSample(GALAPAGOS_SPECS[10],timeU.value,i,new THREE.Vector3());
+        return {world:p.toArray(),screen:p.clone().project(camera).toArray()};})}})
+}),writable:false});
+
+/* ---------- state ---------- */
+const myAz = Math.random()*Math.PI*2;
+const myR = 9 + Math.random()*5;
+let depth = 1.2, targetDepth = 1.2, autoDescent = false;
+let yaw = 0, pitch = -0.22;
+let entered = false, enterTime = 0, breathEpoch = 0;
+let guideOn = true, soundOn = true;
+let holdDir = 0, lastInteract = 0;
+const BREATH = 9000, INHALE = 4000;
+/* free swimming */
+let posX = 0, posZ = -9;
+const swimVel = new THREE.Vector3();
+let yawRate = 0, roll = 0, kickPh = 0, hintDismissed = false;
+const keys = new Set();
+const SWIM_LIMIT = 86;
+
+/* ---------- deep link: ?depth=&x=&z=&yaw=&pitch= ---------- */
+const QP = new URLSearchParams(location.search);
+const qnum = k => { const v = parseFloat(QP.get(k)); return Number.isFinite(v) ? v : null; };
+const deepLink = qnum('depth') !== null || qnum('x') !== null;
+(function applyDeepLink(){
+  const d = qnum('depth');
+  if(d !== null){ depth = Math.min(MAX_DEPTH, Math.max(MIN_DEPTH, d)); targetDepth = depth; }
+  const x = qnum('x'), z = qnum('z');
+  if(x !== null && z !== null){
+    const r = Math.hypot(x, z), k = r > SWIM_LIMIT ? SWIM_LIMIT/r : 1;
+    posX = x*k; posZ = z*k;
+  }
+  const yw = qnum('yaw'); if(yw !== null) yaw = yw;
+  const pt = qnum('pitch'); if(pt !== null) pitch = Math.max(-1.2, Math.min(1.25, pt));
+  if(deepLink){
+    $('gateLive').textContent = `수심 ${depth.toFixed(1)}m의 초대 장소가 준비됐어요`;
+    $('enterBtn').textContent = '초대 장소로 입수하기';
+  }
+})();
+
+/* ---------- visit stats (stored in this browser) ---------- */
+const stats = (()=>{ try{ return Object.assign({visits:0, totalMs:0, maxDepth:0, met:{}}, JSON.parse(localStorage.getItem('mulmit-stats')||'{}')); }catch(e){ return {visits:0, totalMs:0, maxDepth:0, met:{}}; } })();
+function saveStats(){ try{ localStorage.setItem('mulmit-stats', JSON.stringify(stats)); }catch(e){} }
+function gateStatsText(){
+  if(!stats.visits) return '';
+  const kinds = Object.keys(stats.met).length;
+  return `이전 잠수 총 ${stats.visits}회 · ${Math.round(stats.totalMs/60000)}분 · 최고 수심 ${(stats.maxDepth||0).toFixed(1)}m` + (kinds ? ` · 만난 생물 ${kinds}종` : '');
+}
+$('gateStats').textContent = gateStatsText();
+let whaleAt = 0, statsSaveT = 0, encTimer = 0;
+
+/* ---------- audio ---------- */
+let actx = null, master = null, ambLP = null, whiteBuf = null;
+function initAudio(){
+  try{ actx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ actx = null; return; }
+  master = actx.createGain(); master.gain.value = 0; master.connect(actx.destination);
+  master.gain.setValueAtTime(0, actx.currentTime);
+  master.gain.linearRampToValueAtTime(0.9, actx.currentTime + 4);
+  const sr = actx.sampleRate;
+  const brown = actx.createBuffer(1, sr*4, sr), bd = brown.getChannelData(0);
+  let last = 0;
+  for(let i=0;i<bd.length;i++){ const w = Math.random()*2-1; last = (last + 0.02*w)/1.02; bd[i] = last*3.5; }
+  whiteBuf = actx.createBuffer(1, sr*2, sr);
+  const wd = whiteBuf.getChannelData(0); for(let i=0;i<wd.length;i++) wd[i] = Math.random()*2-1;
+  const amb = actx.createBufferSource(); amb.buffer = brown; amb.loop = true;
+  ambLP = actx.createBiquadFilter(); ambLP.type = 'lowpass'; ambLP.frequency.value = 650;
+  const ag = actx.createGain(); ag.gain.value = 0.55;
+  amb.connect(ambLP); ambLP.connect(ag); ag.connect(master); amb.start();
+  [55, 82.4].forEach((f,k)=>{
+    const o = actx.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+    const og = actx.createGain(); og.gain.value = 0.022;
+    const lfo = actx.createOscillator(); lfo.frequency.value = 0.05 + k*0.03;
+    const lg = actx.createGain(); lg.gain.value = 0.014;
+    lfo.connect(lg); lg.connect(og.gain); o.connect(og); og.connect(master); o.start(); lfo.start();
+  });
+}
+/* ---- scuba breathing, synthesized sample by sample ---- */
+function biquad(type, f, Q, sr){
+  const w = 2*Math.PI*f/sr, cs = Math.cos(w), sn = Math.sin(w), al = sn/(2*Q);
+  let b0, b1, b2, a0 = 1 + al, a1 = -2*cs, a2 = 1 - al;
+  if(type === 'bp'){ b0 = al; b1 = 0; b2 = -al; }
+  else if(type === 'lp'){ b0 = (1-cs)/2; b1 = 1-cs; b2 = (1-cs)/2; }
+  else { b0 = (1+cs)/2; b1 = -(1+cs); b2 = (1+cs)/2; }
+  b0 /= a0; b1 /= a0; b2 /= a0; a1 /= a0; a2 /= a0;
+  let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+  return x => { const y = b0*x + b1*x1 + b2*x2 - a1*y1 - a2*y2; x2 = x1; x1 = x; y2 = y1; y1 = y; return y; };
+}
+function normalizeBuf(a, peak){
+  let m = 0; for(let i=0;i<a.length;i++) m = Math.max(m, Math.abs(a[i]));
+  if(m > 0) for(let i=0;i<a.length;i++) a[i] *= peak/m;
+  return a;
+}
+/* demand-valve inhale: valve crack, turbulent hiss through the second stage, metallic ring, valve close */
+function synthInhale(sr){
+  const dur = 3.4, N = Math.floor(sr*dur), out = new Float32Array(N);
+  const j = () => 0.94 + Math.random()*0.12;
+  const bands = [[620,2,0.45,0],[1150,3.5,1.0,0.5],[2450,5,0.9,1],[3100,26,0.35,1],[3900,6,0.6,1.5],[5600,4,0.35,1.5]]
+    .map(([f,q,g,k]) => ({fn:biquad('bp', f*j(), q, sr), g, k}));
+  const hp = biquad('hp', 380, 0.7, sr), lp = biquad('lp', 7800, 0.7, sr), throat = biquad('bp', 430, 1.2, sr), clickHp = biquad('hp', 1800, 0.7, sr);
+  const tEnd = 2.8 + Math.random()*0.3, tClose = 0.07;
+  let flut = 0, flut2 = 0;
+  for(let i=0;i<N;i++){
+    const t = i/sr, wn = Math.random()*2 - 1;
+    let F = 0;
+    if(t >= 0.04 && t < 0.22) F = 0.8*Math.pow((t - 0.04)/0.18, 0.7);
+    else if(t >= 0.22 && t < tEnd){ const u = (t - 0.22)/(tEnd - 0.22); F = 0.8 + 0.3*Math.sin(Math.PI*u) - 0.25*u; }
+    else if(t >= tEnd && t < tEnd + tClose) F = 0.55*Math.pow(1 - (t - tEnd)/tClose, 2);
+    flut += ((Math.random()*2 - 1) - flut)*0.004;
+    flut2 += ((Math.random()*2 - 1) - flut2)*0.0006;
+    const w = wn*F*(1 + 5*flut + 8*flut2);
+    let s = 0;
+    for(const b of bands) s += b.fn(w)*b.g*Math.pow(Math.max(F, 0.001), b.k*0.5);
+    s += hp(w)*0.12 + throat(wn)*0.22*F;
+    let click = 0;
+    if(t > 0.04 && t < 0.07) click += wn*Math.exp(-(t - 0.04)/0.004)*1.4;
+    const tc = tEnd + tClose;
+    if(t > tc && t < tc + 0.03) click += wn*Math.exp(-(t - tc)/0.003)*0.7;
+    out[i] = lp(s + clickHp(click));
+  }
+  return normalizeBuf(out, 0.9);
+}
+/* exhaust: fluttering valve rumble, a stream of large low-pitched bubbles, then small bubbles trickling away */
+function synthExhale(sr){
+  const dur = 4.4, N = Math.floor(sr*dur), out = new Float32Array(N);
+  const tEnd = 2.2 + Math.random()*0.4;
+  const E = t => t < 0.12 ? t/0.12 : t < tEnd ? 1 - 0.35*Math.pow((t - 0.12)/(tEnd - 0.12), 2) : Math.max(0, 0.65*(1 - (t - tEnd)/0.25));
+  const lpR = biquad('lp', 230, 0.9, sr), lpR2 = biquad('lp', 230, 0.9, sr), breathBp = biquad('bp', 520, 1.0, sr);
+  let gatePh = Math.random(), gateF = 17;
+  for(let i=0;i<N;i++){
+    const t = i/sr, wn = Math.random()*2 - 1, e = E(t);
+    gateF += (13 + Math.random()*12 - gateF)*0.0008;
+    gatePh += gateF/sr;
+    const gs = Math.pow(0.5 + 0.5*Math.sin(2*Math.PI*gatePh), 3);
+    out[i] = lpR2(lpR(wn))*e*(0.3 + 1.0*gs)*4.0 + breathBp(wn)*e*0.1;
+  }
+  let t = 0.05;
+  while(t < dur){
+    const e = E(t);
+    const rate = t < tEnd + 0.25 ? 12 + 60*e : 10*Math.exp(-(t - tEnd - 0.25)*1.3);
+    if(rate < 0.4) break;
+    t += -Math.log(1 - Math.random())/rate;
+    const late = t > tEnd + 0.2;
+    const radius = late ? 1.1 + Math.random()*2.8 : 2.4 + Math.pow(Math.random(), 0.7)*9;
+    const f0 = 3260/radius, tau = 0.005 + radius*0.0032;
+    const amp = (late ? 0.16 : 0.5)*(0.4 + Math.random()*0.6)*(late ? 1 : 0.6 + 0.4*e);
+    const start = Math.floor(t*sr), len = Math.floor(tau*6*sr);
+    let ph = Math.random()*6.283;
+    for(let k=0;k<len && start + k < N;k++){
+      const tt = k/sr;
+      ph += 2*Math.PI*f0*(1 + 0.3*tt/(tau*6))/sr;
+      out[start + k] += Math.sin(ph)*(1 - Math.exp(-tt/0.0012))*Math.exp(-tt/tau)*amp;
+    }
+  }
+  const lpF = biquad('lp', 3000, 0.7, sr), hpF = biquad('hp', 45, 0.7, sr);
+  for(let i=0;i<N;i++) out[i] = hpF(lpF(out[i]));
+  return normalizeBuf(out, 0.9);
+}
+let breathBufs = null, breathBus = null;
+function toBuffer(arr){
+  const b = actx.createBuffer(1, arr.length, actx.sampleRate);
+  b.getChannelData(0).set(arr);
+  return b;
+}
+function addBreathVariant(){
+  if(!actx || !breathBufs || breathBufs.inh.length >= 3) return;
+  breathBufs.inh.push(toBuffer(synthInhale(actx.sampleRate)));
+  breathBufs.exh.push(toBuffer(synthExhale(actx.sampleRate)));
+  setTimeout(addBreathVariant, 7000);
+}
+function ensureBreath(){
+  if(breathBufs) return;
+  const sr = actx.sampleRate;
+  breathBufs = {inh:[toBuffer(synthInhale(sr))], exh:[toBuffer(synthExhale(sr))]};
+  breathBus = actx.createGain(); breathBus.gain.value = 1;
+  const body = actx.createBiquadFilter(); body.type = 'peaking'; body.frequency.value = 280; body.Q.value = 0.8; body.gain.value = 4;
+  breathBus.connect(body); body.connect(master);
+  setTimeout(addBreathVariant, 6000);
+}
+function playBreath(list, gain){
+  const s = actx.createBufferSource();
+  s.buffer = list[Math.floor(Math.random()*list.length)];
+  s.playbackRate.value = (0.97 + Math.random()*0.06)*(1 - Math.min(depth, 40)*0.0015);
+  const g = actx.createGain(); g.gain.value = gain;
+  s.connect(g); g.connect(breathBus); s.start();
+}
+function playInhale(){
+  if(!actx || !soundOn) return;
+  ensureBreath();
+  playBreath(breathBufs.inh, 0.26);
+}
+function playExhale(){
+  if(!actx || !soundOn) return;
+  ensureBreath();
+  playBreath(breathBufs.exh, 0.55);
+}
+/* ---- whale song: slow synthesized sweeps, heard now and then below 20 m ---- */
+function playWhale(){
+  if(!actx || !master) return;
+  const t0 = actx.currentTime + 0.1, dur = 7 + Math.random()*3;
+  const lp = actx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 420; lp.Q.value = 0.4;
+  const g = actx.createGain(); g.gain.value = 0;
+  const dl = actx.createDelay(1.5); dl.delayTime.value = 0.42;
+  const fb = actx.createGain(); fb.gain.value = 0.42;
+  const wet = actx.createGain(); wet.gain.value = 0.5;
+  lp.connect(g); g.connect(master);
+  g.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(wet); wet.connect(master);
+  const vol = 0.45 + 0.55*Math.min(1, Math.max(0, (depth - 20)/15));
+  g.gain.setValueAtTime(0, t0);
+  g.gain.linearRampToValueAtTime(0.15*vol, t0 + 2.4);
+  g.gain.setValueAtTime(0.15*vol, t0 + dur - 3);
+  g.gain.linearRampToValueAtTime(0, t0 + dur);
+  const base = 44 + Math.random()*9;
+  [[1, 0.9], [2.01, 0.32], [3.02, 0.1]].forEach(pair => {
+    const m = pair[0], amp = pair[1];
+    const o = actx.createOscillator(); o.type = 'sine';
+    const og = actx.createGain(); og.gain.value = amp;
+    o.connect(og); og.connect(lp);
+    o.frequency.setValueAtTime(base*m, t0);
+    o.frequency.exponentialRampToValueAtTime(base*m*0.7, t0 + dur*0.55);
+    o.frequency.exponentialRampToValueAtTime(base*m*0.92, t0 + dur);
+    const lfo = actx.createOscillator(); lfo.frequency.value = 2.4 + Math.random()*0.9;
+    const lg = actx.createGain(); lg.gain.value = base*m*0.02;
+    lfo.connect(lg); lg.connect(o.frequency);
+    o.start(t0); o.stop(t0 + dur + 0.4);
+    lfo.start(t0); lfo.stop(t0 + dur + 0.4);
+  });
+  setTimeout(()=>{ try{ dl.disconnect(); fb.disconnect(); wet.disconnect(); }catch(e){} }, (dur+2)*1000);
+}
+document.addEventListener('visibilitychange', ()=>{
+  if(!actx) return;
+  if(document.hidden) actx.suspend(); else actx.resume();
+});
+window.addEventListener('pagehide', saveStats);
+
+/* ---------- other divers ---------- */
+const peers = new Map();
+const tagsEl = $('tags');
+let lastSentDepth = -1, lastSentX = 0, lastSentZ = 0, lastSentYaw = 0;
+function strHash(s){ let h = 2166136261; for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0); }
+function peerWorld(az, r, d, out){ return out.set(Math.cos(az)*r, -d, Math.sin(az)*r); }
+function makePeer(id, cc){
+  const h = strHash(id);
+  const diver = buildDiver(ACCENTS[h % ACCENTS.length], (h >> 3) % 2 ? 0xb9c0c6 : 0xd6b03c, cc);
+  scene.add(diver);
+  const tag = document.createElement('div');
+  tag.className = 'tag';
+  const arrow = document.createElement('span'); arrow.className = 'arrow';
+  const fl = document.createElement('span'); fl.className = 'flag'; fl.textContent = flagEmoji(cc);
+  const code = document.createElement('span'); code.textContent = cc || '?';
+  const dd = document.createElement('span'); dd.className = 'dd';
+  tag.append(arrow, fl, code, dd);
+  tagsEl.appendChild(tag);
+  return {diver, tag, arrow, dd, cc, seed:(h % 1000)/100, lastSpawn:0, b:0, d:0};
+}
+function removePeer(id, e){
+  scene.remove(e.diver);
+  e.tag.remove();
+  peers.delete(id);
+}
+function syncPeers(list){
+  const seen = new Set();
+  for(const p of list){
+    if(p.sameTab) continue;
+    const pr = p.presence || {};
+    if(typeof pr.d !== 'number' || typeof pr.az !== 'number' || typeof pr.r !== 'number') continue;
+    const d = Math.min(MAX_DEPTH, Math.max(0, pr.d)), az = pr.az, r = Math.min(SWIM_LIMIT + 5, Math.max(0, pr.r));
+    const cc = (typeof pr.cc === 'string' && /^[A-Z]{2}$/.test(pr.cc)) ? pr.cc : '';
+    seen.add(p.peer);
+    let e = peers.get(p.peer);
+    if(e && e.cc !== cc){ removePeer(p.peer, e); e = null; }
+    if(!e){
+      e = makePeer(p.peer, cc);
+      e.cur = peerWorld(az, r, d, new THREE.Vector3());
+      e.target = e.cur.clone();
+      peers.set(p.peer, e);
+    }
+    peerWorld(az, r, d, e.target);
+    e.b = typeof pr.b === 'number' ? pr.b : 0;
+    e.h = typeof pr.h === 'number' ? pr.h : null;
+    e.d = d;
+  }
+  for(const [id, e] of peers) if(!seen.has(id)) removePeer(id, e);
+  updateTogether();
+}
+function updateTogether(){
+  const n = peers.size + 1;
+  $('together').textContent = n <= 1 ? '지금은 혼자 잠겨 있어요' : `지금 ${n}명이 함께 잠겨 있어요`;
+}
+/* ---------- realtime (Supabase): presence = who is here, broadcast = where they are ---------- */
+const SUPABASE_URL = 'https://bdchynoyysravyoazehl.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_ez9yrwPARYmcHmorHcurNQ_gKsuQBte';
+const ROOM_CAP = 150;           // above this, new visitors dive solo instead of overloading the free plan
+const SEND_EVERY_MS = 650;      // position updates while moving (about 1.5 per second)
+const HEARTBEAT_MS = 5000;      // position refresh while still
+const myId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'd' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+let sbClient = null, channel = null, synced = false, tracked = false, soloMode = false;
+let lastSendAt = 0;
+const peerInfo = new Map();
+const peerPos = new Map();
+function rebuildPeers(){
+  const list = [];
+  for(const [id, info] of peerInfo){
+    if(id === myId) continue;
+    const p = peerPos.get(id);
+    if(!p) continue;
+    list.push({peer:id, sameTab:false, presence:{az:Math.atan2(p.z, p.x), r:Math.hypot(p.x, p.z), d:p.d, h:p.h, b:info.b, cc:info.cc}});
+  }
+  syncPeers(list);
+}
+function sendPresence(force){
+  if(!channel || !tracked || !entered) return;
+  const now = performance.now();
+  const d = Math.round(depth*10)/10;
+  const moved = Math.hypot(posX - lastSentX, posZ - lastSentZ);
+  const changed = Math.abs(d - lastSentDepth) >= 0.3 || moved >= 0.25 || Math.abs(yaw - lastSentYaw) >= 0.12;
+  if(!force && !(changed && now - lastSendAt > SEND_EVERY_MS) && now - lastSendAt < HEARTBEAT_MS) return;
+  lastSentDepth = d; lastSentX = posX; lastSentZ = posZ; lastSentYaw = yaw; lastSendAt = now;
+  channel.send({type:'broadcast', event:'pos', payload:{id:myId, x:Math.round(posX*100)/100, z:Math.round(posZ*100)/100, d, h:Math.round(yaw*100)/100}}).catch(()=>{});
+}
+function trackSelf(){
+  if(!channel || !synced || tracked || soloMode || !entered) return;
+  tracked = true;
+  channel.track({cc: myCC, b: breathEpoch}).catch(()=>{});
+  sendPresence(true);
+}
+function retrackSelf(){
+  if(channel && tracked) channel.track({cc: myCC, b: breathEpoch}).catch(()=>{});
+}
+function diveSolo(msg){
+  soloMode = true;
+  peerInfo.clear(); peerPos.clear(); rebuildPeers();
+  $('together').textContent = msg;
+  $('gateLive').textContent = '지금 물속이 가득 차 있어요';
+}
+(function connectRealtime(){
+  if(!window.supabase || typeof window.supabase.createClient !== 'function') return;
+  try{
+    sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {realtime:{params:{eventsPerSecond:5}}});
+    const ch = sbClient.channel('mulmit-sea', {config:{presence:{key:myId}, broadcast:{self:false}}});
+    ch.on('presence', {event:'sync'}, () => {
+      const st = ch.presenceState();
+      if(!entered && !soloMode){
+        const gn = Object.keys(st).length;
+        $('gateLive').textContent = gn > 0 ? `지금 바닷속에 ${gn}명이 있어요` : '지금 바닷속이 조용해요 — 첫 다이버가 될 수 있어요';
+      }
+      if(!synced){
+        synced = true;
+        if(Object.keys(st).length >= ROOM_CAP){
+          sbClient.removeChannel(ch); channel = null;
+          diveSolo('지금 물속이 붐벼서 혼자 잠수하고 있어요');
+          return;
+        }
+        channel = ch;
+        trackSelf();
+      }
+      peerInfo.clear();
+      for(const id of Object.keys(st)){
+        const metas = st[id] || [];
+        const m = metas[metas.length - 1] || {};
+        peerInfo.set(id, {cc: typeof m.cc === 'string' ? m.cc : '', b: Number.isFinite(m.b) ? m.b : 0});
+      }
+      for(const id of [...peerPos.keys()]) if(!peerInfo.has(id)) peerPos.delete(id);
+      rebuildPeers();
+    });
+    ch.on('broadcast', {event:'pos'}, msg => {
+      const p = (msg && msg.payload) || {};
+      if(typeof p.id !== 'string' || p.id === myId || p.id.length > 64) return;
+      if(![p.x, p.z, p.d, p.h].every(Number.isFinite)) return;
+      const isNew = !peerPos.has(p.id);
+      peerPos.set(p.id, {x:p.x, z:p.z, d:p.d, h:p.h});
+      if(peerInfo.has(p.id)){
+        if(isNew) rebuildPeers();
+        else {
+          const e = peers.get(p.id);
+          if(e){
+            peerWorld(Math.atan2(p.z, p.x), Math.min(SWIM_LIMIT + 5, Math.hypot(p.x, p.z)), Math.min(MAX_DEPTH, Math.max(0, p.d)), e.target);
+            e.h = p.h; e.d = Math.min(MAX_DEPTH, Math.max(0, p.d));
+          } else rebuildPeers();
+        }
+      }
+      // someone new is listening: let them see us right away
+      if(isNew) lastSendAt = Math.min(lastSendAt, performance.now() - HEARTBEAT_MS + 400);
+    });
+    ch.on('broadcast', {event:'wave'}, msg => {
+      const p = (msg && msg.payload) || {};
+      if(typeof p.id !== 'string' || p.id === myId) return;
+      const e = peers.get(p.id);
+      if(e) e.waveUntil = Date.now() + 2600;
+    });
+    ch.subscribe(status => {
+      if(status === 'SUBSCRIBED' && !soloMode) channel = channel || ch;
+      if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT'){ tracked = false; }
+    });
+  }catch(e){ sbClient = null; channel = null; }
+})();
+setTimeout(()=>{ if(!synced && !entered) $('gateLive').textContent = '지금은 조용한 바다예요'; }, 8000);
+
+/* ---------- input ---------- */
+let drag = null;
+const touchPoints = new Map();
+let pinchDistance = null, pinchThrust = 0, pinchUntil = 0;
+const mobileControls = matchMedia('(pointer:coarse), (max-width:900px)');
+function updateControlHint(){
+  $('hint').innerHTML = mobileControls.matches ? '한 손가락으로 끌면 둘러보고, 두 손가락을 벌리면 앞으로 · 오므리면 뒤로<br>오른쪽 버튼으로 수심을 조절해요' : '방향키로 헤엄치고, Q·E로 깊이를 조절해요<br>G는 인사, 마우스를 끌면 고개를 돌릴 수 있어요';
+}
+updateControlHint();
+if(mobileControls.addEventListener) mobileControls.addEventListener('change',updateControlHint);
+function markInteraction(){autoDescent = false; lastInteract = performance.now();}
+function touchGap(){const p=[...touchPoints.values()];return p.length===2?Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y):null;}
+function pinchAmount(previous,current){return Math.max(-1,Math.min(1,Math.log(Math.max(1,current)/Math.max(1,previous))*9));}
+function stopMobileMotion(){
+  touchPoints.clear(); pinchDistance = null; pinchThrust = 0; pinchUntil = 0; drag = null; holdDir = 0;
+  swimVel.set(0,0,0); targetDepth = depth; autoDescent = false;
+}
+function clearAllInput(){ keys.clear();stopMobileMotion(); }
+function swimDirection(heading,tilt,forward,side){
+  const n=Math.max(1,Math.hypot(forward,side));forward/=n;side/=n;
+  return {x:Math.sin(heading)*Math.cos(tilt)*forward-Math.cos(heading)*side,y:Math.sin(tilt)*forward,z:Math.cos(heading)*Math.cos(tilt)*forward+Math.sin(heading)*side};
+}
+canvas.addEventListener('pointerdown', e => {
+  if(!entered || $('inviteDialog').open) return;
+  e.preventDefault();canvas.setPointerCapture(e.pointerId);lastInteract=performance.now();
+  if(e.pointerType==='touch'){
+    touchPoints.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(touchPoints.size>1){drag=null;pinchDistance=touchGap();pinchThrust=0;return;}
+  }
+  drag = {x:e.clientX,y:e.clientY,id:e.pointerId};
+});
+canvas.addEventListener('pointermove', e => {
+  if(touchPoints.has(e.pointerId)){
+    touchPoints.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    if(touchPoints.size>1){
+      e.preventDefault();const distance=touchGap();
+      if(distance!==null && pinchDistance!==null){pinchThrust=pinchAmount(pinchDistance,distance);pinchUntil=performance.now()+160;markInteraction();}
+      pinchDistance=distance;return;
+    }
+  }
+  if(!drag || e.pointerId !== drag.id) return;
+  yaw += (e.clientX - drag.x)*0.0042;
+  pitch = Math.max(-1.2, Math.min(1.25, pitch + (e.clientY - drag.y)*0.0034));
+  drag.x = e.clientX; drag.y = e.clientY; lastInteract = performance.now();
+});
+const endDrag = e => {
+  const wasPinching=touchPoints.size>1;
+  touchPoints.delete(e.pointerId);
+  if(wasPinching){
+    pinchDistance=null;pinchThrust=0;pinchUntil=0;swimVel.set(0,0,0);targetDepth=depth;
+    if(touchPoints.size===1){const [id,p]=[...touchPoints.entries()][0];drag={id,x:p.x,y:p.y};}
+    else drag=null;
+  }else if(drag && e.pointerId===drag.id) drag=null;
+  lastInteract=performance.now();
+};
+canvas.addEventListener('pointerup', endDrag);
+canvas.addEventListener('pointercancel', endDrag);
+canvas.addEventListener('lostpointercapture', endDrag);
+canvas.addEventListener('wheel', e => {
+  if(!entered) return;
+  e.preventDefault();
+  autoDescent = false;
+  targetDepth = Math.max(MIN_DEPTH, Math.min(MAX_DEPTH, targetDepth + e.deltaY*0.012));
+}, {passive:false});
+function bindHold(btn, dir){
+  let owner=null;
+  const start = e => { if(!entered || $('inviteDialog').open)return;e.preventDefault();owner=e.pointerId;btn.setPointerCapture(e.pointerId);holdDir=dir;markInteraction(); };
+  const stop = e => { if(e && e.pointerId!==undefined && owner!==null && e.pointerId!==owner)return;owner=null;if(holdDir===dir){holdDir=0;targetDepth=depth;swimVel.y=0;} };
+  btn.addEventListener('pointerdown', start);
+  btn.addEventListener('pointerup', stop);
+  btn.addEventListener('lostpointercapture', stop);
+  btn.addEventListener('pointercancel', stop);
+  btn.addEventListener('keydown', e => { if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); holdDir = dir; autoDescent = false; } });
+  btn.addEventListener('keyup', stop);
+}
+bindHold($('upBtn'), -1);
+bindHold($('downBtn'), 1);
+const KEYMAP = {
+  ArrowUp:'fwd', KeyW:'fwd', ArrowDown:'back', KeyS:'back',
+  ArrowLeft:'left', KeyA:'left', ArrowRight:'right', KeyD:'right',
+  KeyE:'up', Space:'up', KeyQ:'down', ShiftLeft:'down', ShiftRight:'down'
+};
+window.addEventListener('keydown', e => {
+  if(!entered) return;
+  if($('inviteDialog').open) return;
+  if(e.code === 'KeyG' && !e.repeat && !e.ctrlKey && !e.metaKey){ e.preventDefault(); sendWave(); return; }
+  const k = KEYMAP[e.code];
+  if(!k) return;
+  if((e.code === 'Space') && e.target && e.target.tagName === 'BUTTON') return;
+  e.preventDefault();
+  keys.add(k);
+  autoDescent = false;
+  if(!hintDismissed){ hintDismissed = true; $('hint').classList.remove('on'); }
+});
+window.addEventListener('keyup', e => { const k = KEYMAP[e.code]; if(k) keys.delete(k); });
+window.addEventListener('blur', clearAllInput);
+window.addEventListener('pagehide', clearAllInput);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)clearAllInput();});
+$('soundBtn').addEventListener('click', () => {
+  soundOn = !soundOn;
+  $('soundBtn').textContent = soundOn ? '소리 끄기' : '소리 켜기';
+  if(actx && master){
+    const t = actx.currentTime;
+    master.gain.cancelScheduledValues(t);
+    master.gain.setValueAtTime(master.gain.value, t);
+    master.gain.linearRampToValueAtTime(soundOn ? 0.9 : 0, t + 0.8);
+  }
+});
+$('guideBtn').addEventListener('click', () => {
+  guideOn = !guideOn;
+  $('guideBtn').textContent = guideOn ? '호흡 안내 끄기' : '호흡 안내 켜기';
+  if(!guideOn) $('breath').style.opacity = 0;
+});
+$('waveBtn').addEventListener('click', sendWave);
+$('shotBtn').addEventListener('click', takeShot);
+$('enterBtn').addEventListener('click', () => {
+  if(entered) return;
+  entered = true;
+  enterTime = performance.now();
+  breathEpoch = Date.now();
+  initAudio();
+  $('gate').classList.add('gone');
+  $('hud').classList.add('on');
+  if(deepLink){ autoDescent = false; targetDepth = depth; }
+  else { autoDescent = true; targetDepth = 12; }
+  stats.visits += 1;
+  saveStats();
+  whaleAt = performance.now() + 40000 + Math.random()*40000;
+  trackSelf();
+  setTimeout(() => { if(actx) ensureBreath(); }, 300);
+  setTimeout(()=>$('hint').classList.add('on'), 3500);
+  setTimeout(()=>$('hint').classList.remove('on'), 20000);
+});
+
+/* ---------- toast · encounters · snapshot · wave ---------- */
+function showToast(msg){
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>el.classList.remove('on'), 3600);
+}
+function sendWave(){
+  if(!channel || !tracked){ showToast('지금은 혼자 잠수 중이에요'); return; }
+  channel.send({type:'broadcast', event:'wave', payload:{id:myId}}).catch(()=>{});
+  showToast('물결을 보냈어요');
+  for(let k=0;k<7;k++){
+    spawnBubble(camPos.x + fwd.x*0.8 + (Math.random()-.5)*0.5, camPos.y - 0.25 + Math.random()*0.2, camPos.z + fwd.z*0.8 + (Math.random()-.5)*0.5);
+  }
+}
+let inviteData = null, inviteBusy = false;
+function buildInviteLink(base, spot){
+  const url = new URL(base);
+  if(!/^https?:$/.test(url.protocol)) return '';
+  url.search = ''; url.hash = '';
+  ['depth','x','z','yaw','pitch'].forEach(key => url.searchParams.set(key, String(spot[key])));
+  return url.href;
+}
+function captureInviteSpot(){
+  return {
+    depth:Number(depth.toFixed(2)), x:Number(posX.toFixed(2)), z:Number(posZ.toFixed(2)),
+    yaw:Number(Math.atan2(Math.sin(yaw),Math.cos(yaw)).toFixed(4)),
+    pitch:Number(pitch.toFixed(4))
+  };
+}
+function wrapInviteText(g, text, x, y, maxWidth, lineHeight){
+  let line = '';
+  for(const char of text){
+    if(line && g.measureText(line + char).width > maxWidth){ g.fillText(line,x,y); y += lineHeight; line = ''; }
+    line += char;
+  }
+  if(line) g.fillText(line,x,y);
+}
+async function takeShot(){
+  if(!entered || inviteBusy) return;
+  inviteBusy = true; $('shotBtn').disabled = true;
+  try{
+    if(document.fonts && document.fonts.ready) await Promise.race([document.fonts.ready,new Promise(resolve=>setTimeout(resolve,1200))]);
+    const spot = captureInviteSpot();
+    const url = buildInviteLink(location.href, spot);
+    renderer.render(scene, camera);
+    const src = renderer.domElement;
+    const W = 1280, imageH = Math.round(W*src.height/src.width), footerH = 272;
+    const c = document.createElement('canvas'); c.width = W; c.height = imageH + footerH;
+    const g = c.getContext('2d');
+    g.drawImage(src,0,0,W,imageH);
+    g.fillStyle = '#03202b'; g.fillRect(0,imageH,W,footerH);
+    g.textBaseline = 'top'; g.fillStyle = '#dcf1f2';
+    g.font = '700 34px "Gowun Batang", serif'; g.fillText('물밑 · 이 장소로 초대해요',40,imageH+26);
+    g.font = '23px "Gowun Batang", serif'; g.fillStyle = '#a6f4e4';
+    g.fillText(`수심 ${spot.depth.toFixed(2)}m  ·  좌표 X ${spot.x.toFixed(2)} / Z ${spot.z.toFixed(2)}`,40,imageH+82);
+    g.font = '18px "Gowun Batang", serif'; g.fillStyle = '#bfe0e4';
+    g.fillText(`다이브 타임 ${fmt((performance.now()-enterTime)/1000)} · ${peers.size+1}명과 함께 · 초대 링크를 열고 입수해요`,40,imageH+126);
+    g.font = '17px monospace';
+    wrapInviteText(g, url || '배포된 사이트에서 열면 이 장소의 초대 링크가 만들어져요.',40,imageH+170,W-80,25);
+    const blob = await new Promise(resolve => c.toBlob(resolve,'image/png'));
+    if(!blob) throw new Error('IMAGE_CAPTURE_FAILED');
+    if(inviteData) URL.revokeObjectURL(inviteData.preview);
+    inviteData = {spot,url,blob,preview:URL.createObjectURL(blob)};
+    $('invitePreview').src = inviteData.preview;
+    $('inviteLink').value = url;
+    $('inviteCopy').disabled = !url; $('inviteShare').disabled = !url;
+    $('inviteStatus').textContent = url ? '이미지와 링크를 함께 보내면 이 자리로 초대할 수 있어요.' : '로컬 파일에서는 링크를 만들 수 없어요. 배포된 사이트에서 열어 주세요.';
+    clearAllInput();
+    $('inviteDialog').showModal();
+  }catch(error){
+    showToast('초대 이미지를 만들지 못했어요. 다시 눌러 주세요.');
+  }finally{ inviteBusy = false; $('shotBtn').disabled = false; }
+}
+function saveInviteImage(){
+  if(!inviteData) return;
+  const a = document.createElement('a');
+  a.href = inviteData.preview; a.download = 'mulmit-invite.png';
+  document.body.appendChild(a); a.click(); a.remove();
+  $('inviteStatus').textContent = '이미지 저장을 요청했어요. 이미지만 보내면 링크를 누를 수 없으니 초대 링크도 함께 보내 주세요.';
+}
+async function copyInviteLink(){
+  if(!inviteData || !inviteData.url) return;
+  try{
+    if(!navigator.clipboard || !navigator.clipboard.writeText) throw new Error('CLIPBOARD_UNAVAILABLE');
+    await navigator.clipboard.writeText(inviteData.url);
+    $('inviteStatus').textContent = '초대 링크를 복사했어요. 이미지와 함께 보내 주세요.';
+  }catch(error){
+    $('inviteLink').focus(); $('inviteLink').select();
+    $('inviteLink').setSelectionRange(0,$('inviteLink').value.length);
+    $('inviteStatus').textContent = '자동 복사를 사용할 수 없어요. 선택된 링크를 직접 복사해 주세요.';
+  }
+}
+async function shareInvite(){
+  if(!inviteData || !inviteData.url) return;
+  const data = inviteData;
+  const text = `물밑, 수심 ${data.spot.depth.toFixed(2)}m에서 만나요.\n좌표 X ${data.spot.x.toFixed(2)} / Z ${data.spot.z.toFixed(2)}`;
+  const file = new File([data.blob],'mulmit-invite.png',{type:'image/png'});
+  try{
+    if(!navigator.share){ await copyInviteLink(); return; }
+    const payload = {title:'물밑 · 이 장소로 초대해요',text,url:data.url};
+    if(navigator.canShare && navigator.canShare({...payload,files:[file]})) payload.files = [file];
+    await navigator.share(payload);
+    $('inviteStatus').textContent = '초대 공유를 마쳤어요.';
+  }catch(error){
+    if(error.name === 'AbortError') return;
+    $('inviteStatus').textContent = '이 환경에서는 공유를 마치지 못했어요. 링크 복사와 이미지 저장을 이용해 주세요.';
+  }
+}
+$('inviteClose').addEventListener('click',()=>$('inviteDialog').close());
+$('inviteDialog').addEventListener('close',()=>{ keys.clear(); lastInteract = performance.now(); $('shotBtn').focus(); });
+$('inviteCopy').addEventListener('click',copyInviteLink);
+$('inviteSave').addEventListener('click',saveInviteImage);
+$('inviteShare').addEventListener('click',shareInvite);
+const ENCOUNTERS = GALAPAGOS_SPECS.map(s=>({key:'gal-'+s.kind,name:s.label,s,hold:0}));
+function checkEncounters(t){
+  for(const c of ENCOUNTERS){
+    let seen=false;
+    for(let i=0;i<c.s.n;i++){
+      galSample(c.s,t,i,vA);vB.copy(vA).sub(camPos);
+      const d=vB.length(),reach=c.s.kind==='orca'?38:c.s.kind==='crevice'?5:14;
+      // A nearby habitat behind your head is not a sighting.
+      if(d<reach && d>.15 && vB.dot(fwd)/d>.78){seen=true;break;}
+    }
+    c.hold = seen ? c.hold+1 : 0;
+    if(c.hold >= 3 && !stats.met[c.key]){
+      stats.met[c.key] = 1;
+      saveStats();
+      showToast(`도감에 기록됐어요 — ${c.name}`);
+    }
+  }
+}
+
+/* ---------- loop ---------- */
+const clock = new THREE.Clock();
+const camPos = new THREE.Vector3(), fwd = new THREE.Vector3(), look = new THREE.Vector3();
+const mp = new THREE.Vector3(), mn = new THREE.Vector3(), mq = new THREE.Vector3();
+const vA = new THREE.Vector3(), vB = new THREE.Vector3(), regLocal = new THREE.Vector3(0, -0.045, 0.8), headLocal = new THREE.Vector3(0, 0.6, 0.6);
+const wcol = new THREE.Color();
+let lastPhase = '', lastSpawnSelf = 0, presenceTimer = 0;
+const fmt = s => String(Math.floor(s/60)).padStart(2,'0') + ':' + String(Math.floor(s%60)).padStart(2,'0');
+function easeTo(cur, want, rate, dt){ return cur + Math.sign(want - cur)*Math.min(Math.abs(want - cur), rate*dt); }
+
+function placeTag(e, W, H){
+  e.diver.localToWorld(vA.copy(headLocal));
+  vB.copy(vA).applyMatrix4(camera.matrixWorldInverse);
+  const inFront = vB.z < -0.2;
+  let x, y, edge = false, ang = 0;
+  if(inFront){
+    const n = vA.clone().project(camera);
+    x = (n.x + 1)/2*W; y = (1 - n.y)/2*H;
+    if(x < 60 || x > W - 60 || y < 70 || y > H - 110) edge = true;
+  } else edge = true;
+  if(edge){
+    let dx = vB.x, dy = vB.y;
+    if(!inFront){ if(Math.abs(dx) < 0.01 && Math.abs(dy) < 0.01) dy = -1; }
+    ang = Math.atan2(dy, dx);
+    const mx = W/2 - 80, my = H/2 - 110;
+    const c = Math.cos(ang), s = Math.sin(ang);
+    const k = Math.min(mx/Math.max(1e-3, Math.abs(c)), my/Math.max(1e-3, Math.abs(s)));
+    x = W/2 + c*k; y = H/2 - s*k;
+  }
+  e.tag.classList.toggle('edge', edge);
+  e.arrow.style.transform = `rotate(${-ang}rad)`;
+  e.tag.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) translate(-50%,${edge ? '-50%' : '-100%'})`;
+  const dist = vB.length();
+  e.dd.textContent = e.near ? '가까이 있어요' : edge ? `${Math.round(dist)}m 거리` : `수심 ${Math.round(e.d)}m`;
+}
+
+function frame(){
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const t = clock.elapsedTime;
+  timeU.value = t;
+
+  const inputAllowed=entered && !$('inviteDialog').open;
+  const vDir = inputAllowed ? holdDir || ((keys.has('down') ? 1 : 0) - (keys.has('up') ? 1 : 0)) : 0;
+  if(vDir) targetDepth = Math.max(MIN_DEPTH, Math.min(MAX_DEPTH, targetDepth + vDir*2.4*dt));
+
+  // swimming: fin thrust with water drag and glide
+  if(performance.now()>pinchUntil && pinchThrust!==0){
+    pinchThrust=0;
+    if(!keys.size){swimVel.set(0,0,0);targetDepth=depth;}
+  }
+  const keyboardThrust=(keys.has('fwd')?1:0)-(keys.has('back')?.45:0);
+  const thrust=inputAllowed?Math.max(-1,Math.min(1,keyboardThrust+pinchThrust)):0;
+  const turn = inputAllowed ? (keys.has('left') ? 1 : 0) - (keys.has('right') ? 1 : 0) : 0;
+  yawRate += (turn*0.8 - yawRate)*Math.min(1, dt*2.5);
+  yaw += yawRate*dt;
+  roll += (yawRate*0.09 - roll)*Math.min(1, dt*2);
+  {
+    const direction=swimDirection(yaw,pitch,thrust,0);
+    const wantX=direction.x*1.75,wantY=direction.y*1.75,wantZ=direction.z*1.75;
+    const k = Math.min(1, dt*(thrust !== 0 ? 3 : 0.45));
+    swimVel.x += (wantX - swimVel.x)*k; swimVel.y += (wantY - swimVel.y)*k; swimVel.z += (wantZ - swimVel.z)*k;
+    posX += swimVel.x*dt; posZ += swimVel.z*dt;
+    if(Math.abs(swimVel.y) > 0.01){
+      depth = Math.max(MIN_DEPTH, Math.min(MAX_DEPTH, depth - swimVel.y*dt));
+      if(!vDir) targetDepth = depth;
+      if(depth <= MIN_DEPTH || depth >= MAX_DEPTH) swimVel.y = 0;
+    }
+    const rr = Math.hypot(posX, posZ);
+    if(rr > SWIM_LIMIT){ posX *= SWIM_LIMIT/rr; posZ *= SWIM_LIMIT/rr; swimVel.x *= 0.5; swimVel.z *= 0.5; }
+    if(thrust !== 0 || turn !== 0) lastInteract = performance.now();
+  }
+  const swimSpeed = swimVel.length();
+  kickPh += dt*(2.4 + swimSpeed*2.0)*Math.min(1, swimSpeed*3);
+  const maxSpeed = autoDescent ? 0.55 : 2.6;
+  const diff = targetDepth - depth;
+  depth += Math.sign(diff) * Math.min(Math.abs(diff), maxSpeed*dt);
+  if(autoDescent && Math.abs(diff) < 0.05) autoDescent = false;
+  // Stay above the actual triangular seabed when swimming onto a raised shelf.
+  const floorDepth=Math.max(MIN_DEPTH,-gridH(posX,posZ)-1.15);
+  if(depth>floorDepth){depth=floorDepth;targetDepth=Math.min(targetDepth,floorDepth);swimVel.y=Math.max(0,swimVel.y);}
+
+  let ph = 0, inhaling = false;
+  if(entered){
+    ph = ((Date.now() - breathEpoch) % BREATH + BREATH) % BREATH;
+    inhaling = ph < INHALE;
+    const phase = inhaling ? 'in' : 'out';
+    if(phase !== lastPhase){
+      lastPhase = phase;
+      if(inhaling) playInhale(); else playExhale();
+      const el = $('breath');
+      if(guideOn){
+        el.textContent = inhaling ? '들이쉬기' : '내쉬기';
+        el.style.opacity = 0.85;
+        setTimeout(()=>{ if(lastPhase === phase) el.style.opacity = 0.25; }, 1800);
+      }
+    }
+  }
+  const buoy = entered ? (inhaling ? 0.22*Math.sin((ph/INHALE)*Math.PI/2) : 0.22*(1 - (ph-INHALE)/(BREATH-INHALE))) : 0;
+
+  if(!reduceMotion && performance.now() - lastInteract > 6000) yaw += dt*0.012;
+  if(entered && !drag && performance.now() - lastInteract > 2000) pitch += (0 - pitch)*Math.min(1, dt*0.25);
+  const finBob = reduceMotion ? 0 : Math.sin(kickPh)*0.035*Math.min(1, swimSpeed/0.8);
+  camPos.set(posX, -depth + buoy + finBob + (reduceMotion ? 0 : Math.sin(t*0.4)*0.12), posZ);
+  camera.position.copy(camPos);
+  fwd.set(Math.sin(yaw)*Math.cos(pitch), Math.sin(pitch), Math.cos(yaw)*Math.cos(pitch));
+  look.copy(camPos).add(fwd);
+  camera.lookAt(look);
+  if(!reduceMotion){
+    camera.rotateZ(roll + Math.sin(kickPh*0.5)*0.006*Math.min(1, swimSpeed));
+    camera.rotateX(Math.sin(kickPh)*0.008*Math.min(1, swimSpeed));
+  }
+  camera.updateMatrixWorld();
+
+  waterColor(depth, wcol);
+  scene.fog.color.copy(wcol);
+  scene.fog.density = 0.02 + 0.02*(depth/40);
+  const lightK = 1 - Math.min(1, depth/40);
+  hemi.intensity = 0.48 + 0.5*lightK;
+  sun.intensity = 0.23 + 0.6*lightK;
+  for(const m of rayMats) m.uniforms.uI.value = 0.05 + 0.08*lightK;
+  for(const m of envMats) m.envMapIntensity = m.userData.envBase*(0.25 + 0.75*lightK);
+  if(ambLP) ambLP.frequency.value = Math.max(240, 700 - depth*11);
+
+  if(entered && !inhaling && ph - INHALE < 2200 && t - lastSpawnSelf > 0.05){
+    lastSpawnSelf = t;
+    const sx = Math.cos(yaw), sz = -Math.sin(yaw);
+    for(let k=0;k<2;k++){
+      const j = (Math.random()-.5)*0.5;
+      spawnBubble(camPos.x + fwd.x*1.1 + sx*j, camPos.y - 0.45 + Math.random()*0.1, camPos.z + fwd.z*1.1 + sz*j);
+    }
+  }
+
+  // other divers
+  const now = Date.now();
+  const W = innerWidth, H = innerHeight;
+  for(const e of peers.values()){
+    const near = e.cur.distanceTo(camPos) < 7;
+    if(near !== e.near){ e.near = near; e.tag.classList.toggle('near', near); }
+    const gap = e.cur.distanceTo(e.target);
+    e.cur.lerp(e.target, Math.min(1, dt*1.4));
+    e.moving = (e.moving || 0) + ((gap > 0.12 ? 1 : 0) - (e.moving || 0))*Math.min(1, dt*2);
+    e.kph = (e.kph || 0) + dt*(1.9 + e.moving*1.8);
+    const pph = ((now - e.b) % BREATH + BREATH) % BREATH;
+    const pin = pph < INHALE;
+    const swell = pin ? Math.sin((pph/INHALE)*Math.PI/2) : 1 - (pph-INHALE)/(BREATH-INHALE);
+    const dv = e.diver;
+    dv.position.copy(e.cur); dv.position.y += swell*0.2;
+    const wantH = e.h !== null ? e.h : Math.atan2(-e.cur.x, -e.cur.z) + 0.7*Math.sin(t*0.035 + e.seed);
+    if(e.hc === undefined) e.hc = wantH;
+    e.hc += Math.atan2(Math.sin(wantH - e.hc), Math.cos(wantH - e.hc))*Math.min(1, dt*2);
+    dv.rotation.set(-0.06 + 0.05*Math.sin(t*0.3 + e.seed) - swell*0.04, e.hc, 0.04*Math.sin(t*0.25 + e.seed));
+    const amp = 1 + e.moving*0.5;
+    for(const lg of dv.userData.legs){
+      const a = e.kph + (lg.sd > 0 ? 0 : Math.PI) + e.seed;
+      lg.hip.rotation.x = 0.12 + 0.2*amp*Math.sin(a);
+      lg.knee.rotation.x = 0.45 + 0.22*amp*Math.sin(a - 0.9);
+      lg.ankle.rotation.x = -0.35 + 0.18*Math.sin(a - 1.6);
+    }
+    const arm = dv.userData.arm;
+    if(arm){
+      if(now < (e.waveUntil || 0)){
+        e.wph = (e.wph || 0) + dt*10;
+        arm.rotation.z += (1.75 + 0.5*Math.sin(e.wph) - arm.rotation.z)*Math.min(1, dt*9);
+      } else arm.rotation.z *= Math.max(0, 1 - dt*5);
+    }
+    const beamK = Math.max(0, Math.min(1, (e.d - 10)/18));
+    dv.userData.beamMat.uniforms.uI.value = 0.2*beamK;
+    dv.userData.lamp.material.opacity = 0.9*beamK;
+    if(!pin && pph - INHALE < 2000 && t - e.lastSpawn > 0.07){
+      e.lastSpawn = t;
+      dv.localToWorld(vA.copy(regLocal));
+      spawnBubble(vA.x + (Math.random()-.5)*0.08, vA.y, vA.z + (Math.random()-.5)*0.08);
+    }
+    placeTag(e, W, H);
+  }
+
+  // sea life
+  updateGalapagos(t);
+  if(entered)updateGalHud(t);
+  updateBubbles(dt, t);
+  snowMat.uniforms.uCam.value.copy(camPos);
+  snowMat.uniforms.uScale.value = pxScale;
+  bubbleMat.uniforms.uScale.value = pxScale;
+  bioMat.uniforms.uFade.value += ((depth > 22 ? 1 : 0) - bioMat.uniforms.uFade.value)*Math.min(1, dt*0.7);
+  bioMat.uniforms.uCam.value.copy(camPos);
+  bioMat.uniforms.uScale.value = pxScale;
+
+  if(entered){
+    $('dval').textContent = Math.max(0, depth - buoy).toFixed(1);
+    $('tval').textContent = fmt((performance.now() - enterTime)/1000);
+    presenceTimer += dt;
+    if(presenceTimer > 0.3){ presenceTimer = 0; sendPresence(false); }
+    stats.totalMs += dt*1000;
+    if(depth > stats.maxDepth) stats.maxDepth = depth;
+    statsSaveT += dt;
+    if(statsSaveT > 15){ statsSaveT = 0; saveStats(); }
+    encTimer += dt;
+    if(encTimer > 0.5){ encTimer = 0; checkEncounters(t); }
+    if(whaleAt && performance.now() > whaleAt){
+      if(depth > 20){ playWhale(); whaleAt = performance.now() + 90000 + Math.random()*90000; }
+      else whaleAt = performance.now() + 15000;
+    }
+  }
+
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+
+function resize(){
+  renderer.setSize(innerWidth, innerHeight, false);
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  updatePxScale();
+}
+window.addEventListener('resize', resize);
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
